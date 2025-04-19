@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 245, 245, 247;
+  --gray-text: 102, 102, 102;
+  --transition-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+input,
+button {
+  font-family: inherit;
+}
+
+/* Apple-style animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s var(--transition-ease) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s var(--transition-ease) forwards;
+}
+
+/* Apple-style button */
+.apple-button {
+  @apply rounded-2xl font-medium transition-all duration-300;
+  letter-spacing: -0.01em;
+}
+
+.apple-button:active {
+  transform: scale(0.98);
+}
+
+/* Apple-style card */
+.apple-card {
+  @apply bg-white/90 backdrop-blur-xl rounded-3xl shadow-sm;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
+}
+
+/* Apple-style toggle */
+.apple-toggle {
+  @apply relative inline-flex items-center h-8 rounded-full w-14 transition-colors duration-300 focus:outline-none;
+}
+
+.apple-toggle-knob {
+  @apply inline-block w-6 h-6 transform rounded-full bg-white transition-transform duration-300 shadow-md;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* Apple-style input */
+.apple-input {
+  @apply w-full py-3 text-xl border-b-2 border-black/10 focus:border-black focus:outline-none transition-colors duration-300;
+  letter-spacing: -0.02em;
+}
+
+/* Apple-style list item */
+.apple-list-item {
+  @apply py-4 px-3 rounded-xl transition-colors duration-200 cursor-pointer;
+}
+
+.apple-list-item:active {
+  transform: scale(0.99);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
