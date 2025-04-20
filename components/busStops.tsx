@@ -8,8 +8,8 @@ import dynamic from 'next/dynamic'
 import { fetchNearbyParaderos, ParaderoInfo } from "../lib/fetch-paraderos"
 
 const MapaParaderos = dynamic(() => import('./map'), {
-    ssr: false,
-    loading: () => <div className="h-full w-full flex items-center justify-center bg-gray-200">Cargando mapa...</div>
+  ssr: false,
+  loading: () => <div className="h-full w-full flex items-center justify-center bg-gray-200">Cargando mapa...</div>
 });
 
 interface ConfirmarParaderoProps {
@@ -38,7 +38,7 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
     const getParaderos = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         if (location) {
           const { latitude, longitude } = location.coords;
@@ -79,11 +79,11 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
     const getParaderoByCode = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // This is a placeholder implementation - you would need to implement an actual API call
         // to fetch paradero details by code in your fetchParaderoByCode function
-        
+
         // Simulating a paradero result for now
         // In a real implementation, you would make an API call to get paradero details
         setTimeout(() => {
@@ -94,11 +94,11 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
             distance: 0, // We don't know the distance for manual selection
             pos: [0, 0] // You'd get the real position from API
           };
-          
+
           setParaderos([manualParadero]);
           setSelectedParadero(manualParadero);
           setIsLoading(false);
-          
+
           if ("vibrate" in navigator) {
             navigator.vibrate(10);
           }
@@ -110,7 +110,7 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
         setIsLoading(false);
       }
     };
-    
+
     getParaderoByCode();
   }, [manualParaderoCode]);
 
@@ -131,10 +131,10 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
   };
 
   const formatDistance = (meters: number): string => {
-      if (meters < 1000) {
-          return `${meters} m`;
-      }
-      return `${(meters / 1000).toFixed(1)} km`;
+    if (meters < 1000) {
+      return `${meters} m`;
+    }
+    return `${(meters / 1000).toFixed(1)} km`;
   }
 
   return (
@@ -151,9 +151,9 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
 
       <div className="flex-1 relative">
         <MapaParaderos
-            userLocation={userCoords}
-            selectedParadero={selectedParadero}
-            isLoading={isLoading && paraderos.length === 0}
+          userLocation={userCoords}
+          selectedParadero={selectedParadero}
+          isLoading={isLoading && paraderos.length === 0}
         />
       </div>
 
@@ -168,7 +168,7 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
         }}
       >
         <h2 className="text-2xl font-bold mb-6 tracking-tight flex items-center">
-          <span className="mr-2 text-2xl">🚏</span> ¿Este es tu paradero?
+          <span className="mr-2 text-2xl">📍</span> ¿Este es tu paradero?
         </h2>
 
         {/* List Container */}
@@ -191,12 +191,12 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
             </div>
           ) : error ? (
             <div className="flex justify-center items-center h-full text-center text-red-600 px-4">
-                {error}
+              {error}
             </div>
-           ) : paraderos.length === 0 && !isLoading ? ( // Show message only after loading finished
-              <div className="flex justify-center items-center h-full text-center text-gray-500 px-4">
-                  No se encontraron paraderos cercanos.
-              </div>
+          ) : paraderos.length === 0 && !isLoading ? ( // Show message only after loading finished
+            <div className="flex justify-center items-center h-full text-center text-gray-500 px-4">
+              No se encontraron paraderos cercanos.
+            </div>
           ) : (
             <ul className="space-y-3">
               <AnimatePresence>
@@ -207,19 +207,18 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={() => handleSelectParadero(paradero)}
-                    className={`apple-list-item ${
-                      selectedParadero?.id === paradero.id ? "bg-black text-white" : "hover:bg-gray-100"
-                    }`}
+                    className={`apple-list-item ${selectedParadero?.id === paradero.id ? "bg-black text-white" : "hover:bg-gray-100"
+                      }`}
                     whileTap={{ scale: 0.98 }}
                   >
                     <div className="text-lg font-medium tracking-tight flex items-center justify-between">
                       <span className="flex items-center truncate pr-2">
-                        <span className="mr-2 text-xl">🚌</span>
+                        <span className="mr-2 text-xl">🚏</span>
                         <span className="font-semibold mr-2">{paradero.cod}</span>
                         <span className={`truncate ${selectedParadero?.id === paradero.id ? 'text-gray-400' : 'text-gray-600'}`}>{paradero.name}</span>
                       </span>
                       <span className={`font-normal text-sm whitespace-nowrap pl-2 ${selectedParadero?.id === paradero.id ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {formatDistance(paradero.distance)}
+                        {formatDistance(paradero.distance)}
                       </span>
                     </div>
                   </motion.li>
@@ -233,11 +232,10 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
         <motion.button
           onClick={handleConfirm}
           disabled={!selectedParadero || isLoading || !!error}
-          className={`apple-button w-full py-4 mt-6 font-medium text-lg transition-all border-1 ${
-            !selectedParadero || isLoading || !!error
+          className={`apple-button w-full py-4 mt-6 font-medium text-lg transition-all border-1 ${!selectedParadero || isLoading || !!error
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
               : "bg-black text-white hover:bg-white hover:text-black hover:border-black hover:shadow-lg"
-          }`}
+            }`}
           whileTap={{ scale: !selectedParadero || isLoading || !!error ? 1 : 0.98 }}
         >
           Sí, es este

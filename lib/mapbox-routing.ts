@@ -47,7 +47,7 @@ export const getRouteLineLayer = (): LayerProps => ({
  * Creates a GeoJSON source with lineMetrics enabled for use with line gradients
  */
 export const getRouteSource = (routeData: RouteData | null) => ({
-  type: 'geojson',
+  type: 'geojson' as const,
   data: routeData || {
     type: 'Feature',
     properties: {},

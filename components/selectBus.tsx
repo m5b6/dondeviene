@@ -82,23 +82,23 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
   const fetchBusData = async () => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const response = await fetch(`https://api.xor.cl/red/bus-stop/${busStopId}`)
-      
+
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`)
       }
-      
+
       const data: BusStop = await response.json()
       setBusStopInfo(data)
-      
+
       // Transform the API data to our component structure
       const transformedRoutes: MicroRoute[] = data.services.map(service => {
         // Extract the first bus arrival time (if any)
         const firstBus = service.buses[0]
         let estimatedArrival = "No disponible"
-        
+
         if (service.valid && firstBus) {
           if (firstBus.min_arrival_time === 0) {
             estimatedArrival = "Llegando"
@@ -106,7 +106,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
             estimatedArrival = `${firstBus.min_arrival_time}-${firstBus.max_arrival_time} min`
           }
         }
-        
+
         return {
           id: service.id,
           name: service.id,
@@ -117,20 +117,19 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
           buses: service.buses
         }
       })
-      
-      // Sort by valid services first, then by arrival time
+
       transformedRoutes.sort((a, b) => {
         if (a.valid !== b.valid) return a.valid ? -1 : 1
-        
+
         if (a.valid && b.valid) {
           const aTime = a.buses[0]?.min_arrival_time ?? Infinity
           const bTime = b.buses[0]?.min_arrival_time ?? Infinity
           return aTime - bTime
         }
-        
+
         return 0
       })
-      
+
       setMicroRoutes(transformedRoutes)
     } catch (err) {
       console.error("Error fetching bus data:", err)
@@ -262,7 +261,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
           animate="visible"
         >
           {/* Reload indicator */}
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-2 right-2">
             <ReloadIndicator onReload={fetchBusData} reloadInterval={5000} />
           </div>
 
@@ -321,8 +320,8 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                         className={`${!micro.valid ? "opacity-60" : ""} flex items-center justify-between p-4 rounded-xl cursor-pointer transition-colors duration-150 ${isSelected
-                            ? "bg-black text-white"
-                            : "bg-white/50 hover:bg-gray-100 shadow-md"
+                          ? "bg-black text-white"
+                          : "bg-white/50 hover:bg-gray-100 shadow-md"
                           }`}
                         onClick={() => micro.valid && handleSelectMicro(micro)}
                         whileTap={{ scale: micro.valid ? 0.98 : 1 }}
