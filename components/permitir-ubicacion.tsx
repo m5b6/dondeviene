@@ -11,18 +11,16 @@ interface PermitirUbicacionProps {
 export default function PermitirUbicacion({ onPermission }: PermitirUbicacionProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [hasVibrated, setHasVibrated] = useState(false)
+  const [permissionError, setPermissionError] = useState<string | null>(null)
 
-  // Efecto para vibración al cargar - try/catch to prevent errors
   useEffect(() => {
     if (!hasVibrated && "vibrate" in navigator) {
       try {
-        // Only try to vibrate if the document has received user interaction
         if (document.hasFocus()) {
           navigator.vibrate(10) // Vibración sutil
         }
         setHasVibrated(true)
       } catch (e) {
-        // Ignore vibration errors silently
         setHasVibrated(true)
       }
     }
@@ -30,6 +28,7 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
 
   const handlePermitir = () => {
     setIsLoading(true)
+    setPermissionError(null)
 
     // Vibración táctil - with error handling
     if ("vibrate" in navigator) {
@@ -47,24 +46,34 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
           onPermission(position)
         },
         (error) => {
+          setIsLoading(false)
+
+          if (error.code === 1) { // PERMISSION_DENIED
+            setPermissionError("Permiso denegado. Por favor activa la ubicación en tu navegador.")
+          } else if (error.code === 2) { // POSITION_UNAVAILABLE
+            setPermissionError("No se pudo obtener tu ubicación. Intenta de nuevo.")
+          } else if (error.code === 3) { // TIMEOUT
+            setPermissionError("La búsqueda de ubicación tomó demasiado tiempo. Intenta de nuevo.")
+          } else {
+            setPermissionError("Error al obtener tu ubicación. Intenta de nuevo.")
+          }
+
           // Only log in development
           if (process.env.NODE_ENV === 'development') {
             console.error("Error obteniendo ubicación:", error)
           }
-          setIsLoading(false)
+
           onPermission(null)
         },
-        { 
-          enableHighAccuracy: true, 
-          timeout: 15000, 
-          maximumAge: 10000 // Accept positions up to 10 seconds old
+        {
+          enableHighAccuracy: true,
+          timeout: 10000, // 10 seconds
+          maximumAge: 30000 // Accept positions up to 30 seconds old to improve reliability
         },
       )
     } else {
-      if (process.env.NODE_ENV === 'development') {
-        console.error("Geolocalización no soportada")
-      }
       setIsLoading(false)
+      setPermissionError("Tu navegador no soporta geolocalización.")
       onPermission(null)
     }
   }
@@ -164,6 +173,17 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
           >
+            {permissionError && (
+              <motion.div
+                className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {permissionError}
+              </motion.div>
+            )}
+
             <button
               onClick={handlePermitir}
               disabled={isLoading}
@@ -196,6 +216,13 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
               ) : (
                 "Permitir"
               )}
+            </button>
+
+            <button
+              onClick={handleSkip}
+              className="apple-button w-full py-3 text-gray-500 text-sm font-medium hover:text-black transition-colors"
+            >
+              Continuar sin ubicación
             </button>
           </motion.div>
         </motion.div>

@@ -57,14 +57,14 @@ export default function MapaParaderos({
           zoom: userLocation ? 15 : 12
         }}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="mapbox://styles/mapbox/streets-v11"
+        mapStyle="mapbox://styles/mapbox/navigation-day-v1"
       >
         {userLocation && (
           <Marker
             longitude={userLocation.longitude}
             latitude={userLocation.latitude}
           >
-            <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white" />
+            <div className="w-8 h-8 bg-blue-600 rounded-full border-4 border-white shadow-lg pulse-animation" />
           </Marker>
         )}
 
@@ -73,7 +73,7 @@ export default function MapaParaderos({
             longitude={selectedParadero.pos[1]}
             latitude={selectedParadero.pos[0]}
           >
-            <div className="w-6 h-6 text-xl">🚌</div>
+            <div className="w-12 h-12 text-5xl drop-shadow-lg">🚌</div>
           </Marker>
         )}
       </Map>

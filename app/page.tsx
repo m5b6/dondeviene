@@ -6,7 +6,7 @@ import ConfirmarParadero from "@/components/confirmar-paradero"
 import SeleccionarDestino from "@/components/seleccionar-destino"
 import ActivarAlertas from "@/components/activar-alertas"
 import { AnimatePresence, motion } from "framer-motion"
-import { useGeolocationPermissionCheck } from "@/hooks/useGeolocationPermissionCheck"
+import { useGeolocation } from "@/hooks/useGeolocation"
 
 // Define the type for selected paradero info, matching ConfirmarParadero's output
 interface SelectedParaderoInfo {
@@ -20,21 +20,24 @@ interface SelectedParaderoInfo {
 export default function Home() {
   const [step, setStep] = useState(1)
   const [location, setLocation] = useState<GeolocationPosition | null>(null)
-  // Update state to use the new type
   const [selectedParadero, setSelectedParadero] = useState<SelectedParaderoInfo | null>(null)
   const [destination, setDestination] = useState("")
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  const { permission: initialPermission, position: initialPosition } = useGeolocationPermissionCheck()
+  // Use the new geolocation hook with refined options
+  const { permission, position, error } = useGeolocation({
+    enableHighAccuracy: true,
+    timeout: 7000,
+    maximumAge: 10000, // Accept positions up to 10 seconds old
+  })
 
+  // Auto-proceed to next step if we get permission and position
   useEffect(() => {
-    if (initialPermission === 'granted' && initialPosition) {
-      if (step === 1) {
-        handleLocationPermission(initialPosition)
-      }
+    // Only proceed automatically if we're on step 1 and have a position
+    if (permission === 'granted' && position && step === 1) {
+      handleLocationPermission(position)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPermission, initialPosition, step])
+  }, [permission, position, step])
 
   const handleLocationPermission = (position: GeolocationPosition | null) => {
     setIsTransitioning(true)
