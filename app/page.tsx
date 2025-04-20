@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import PermitirUbicacion from "@/components/askLocation"
 import AskLocationOrParadero, { LocationResult } from "@/components/askLocationOrParadero"
 import ConfirmarParadero from "@/components/busStops"
 import SeleccionarDestino from "@/components/selectBus"
@@ -28,7 +27,7 @@ export default function Home() {
 
   const handleLocationResult = (result: LocationResult) => {
     setIsTransitioning(true)
-    
+
     if (result.type === "location") {
       setLocation(result.position)
       setManualParaderoCode(null)
@@ -39,17 +38,7 @@ export default function Home() {
       setLocation(null)
       setManualParaderoCode(null)
     }
-    
-    setTimeout(() => {
-      setStep(2)
-      setIsTransitioning(false)
-    }, 300)
-  }
 
-  // Function to proceed without location
-  const handleProceedWithoutLocation = () => {
-    setIsTransitioning(true)
-    setLocation(null)
     setTimeout(() => {
       setStep(2)
       setIsTransitioning(false)
@@ -77,12 +66,16 @@ export default function Home() {
 
   const handleComplete = () => {
     console.log("Configuración completada:", {
-      paradero: selectedParadero, // Log the full object
+      paradero: selectedParadero,
       destino: destination,
     })
     setIsTransitioning(true)
     setTimeout(() => {
       setStep(1)
+      setLocation(null)
+      setManualParaderoCode(null)
+      setSelectedParadero(null)
+      setDestination("")
       setLocationAttempts(0)
       setForceAllowNextStep(false)
       setIsTransitioning(false)
@@ -93,6 +86,11 @@ export default function Home() {
     if (step > 1) {
       setIsTransitioning(true)
       setTimeout(() => {
+        // If we're going back from the paradero selection to location, clear the manual code
+        if (step === 2) {
+          setManualParaderoCode(null);
+          setLocation(null);
+        }
         setStep(step - 1)
         setIsTransitioning(false)
       }, 300)
@@ -156,7 +154,7 @@ export default function Home() {
             transition={{ duration: 0.3 }}
             className="h-screen"
           >
-            <SeleccionarDestino onConfirm={handleDestinationConfirm} onBack={handleBack} />
+            <SeleccionarDestino onConfirm={handleDestinationConfirm} onBack={handleBack} busStopId={selectedParadero?.cod || ""} />
           </motion.div>
         )}
 

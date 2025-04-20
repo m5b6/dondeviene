@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import MapPlaceholder from "./mapLoading"
+import ReloadIndicator from "./ReloadIndicator"
 
 // Define animation variants
 const cardVariants = {
@@ -29,115 +30,120 @@ const itemVariants = {
   },
 }
 
+interface Bus {
+  id: string
+  meters_distance: number
+  min_arrival_time: number
+  max_arrival_time: number
+}
+
+interface Service {
+  id: string
+  valid: boolean
+  status_description: string
+  buses: Bus[]
+}
+
+interface BusStop {
+  id: string
+  name: string
+  status_code: number
+  status_description: string
+  services: Service[]
+}
+
 interface MicroRoute {
   id: string
   name: string
   destination: string
   estimatedArrival: string
+  valid: boolean
+  status: string
+  buses: Bus[]
 }
 
 interface SeleccionarDestinoProps {
   onConfirm: (destino: string) => void
   onBack: () => void
+  busStopId: string
 }
 
-export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDestinoProps) {
+export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA433" }: SeleccionarDestinoProps) {
   const [destino, setDestino] = useState("")
-  const [sugerencias, setSugerencias] = useState<string[]>([])
-  const [isFocused, setIsFocused] = useState(false)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
-  const [mode, setMode] = useState<"input" | "micro">("micro")
   const [microRoutes, setMicroRoutes] = useState<MicroRoute[]>([])
+  const [busStopInfo, setBusStopInfo] = useState<BusStop | null>(null)
   const [selectedMicro, setSelectedMicro] = useState<MicroRoute | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Simulación de búsqueda de destinos
-  useEffect(() => {
-    if (destino.length > 2 && mode === "input") {
-      // Aquí se conectaría con una API real para obtener sugerencias
-      const mockSugerencias = [
-        "Mercado Central",
-        "Metro Universidad de Chile",
-        "Plaza de Armas",
-        "Parque Forestal",
-        "Costanera Center",
-      ].filter((s) => s.toLowerCase().includes(destino.toLowerCase()))
-
-      setSugerencias(mockSugerencias)
-
-      // Vibración táctil sutil al mostrar sugerencias
-      if ("vibrate" in navigator) {
-        navigator.vibrate(5)
-      }
-    } else {
-      setSugerencias([])
-    }
-  }, [destino, mode])
-
-  // Simulación de rutas de micro
-  useEffect(() => {
+  // Fetch real bus data from API
+  const fetchBusData = async () => {
     setIsLoading(true)
-    // Aquí se conectaría con una API real para obtener rutas de micro
-    setTimeout(() => {
-      const mockMicroRoutes: MicroRoute[] = [
-        {
-          id: "506",
-          name: "506",
-          destination: "Maipú",
-          estimatedArrival: "5 min",
-        },
-        {
-          id: "210",
-          name: "210",
-          destination: "Estación Central",
-          estimatedArrival: "8 min",
-        },
-        {
-          id: "D18",
-          name: "D18",
-          destination: "Las Condes",
-          estimatedArrival: "12 min",
-        },
-        {
-          id: "401",
-          name: "401",
-          destination: "Providencia",
-          estimatedArrival: "15 min",
-        },
-        {
-          id: "106",
-          name: "106",
-          destination: "Peñalolén",
-          estimatedArrival: "18 min",
-        },
-        {
-          id: "B02",
-          name: "B02",
-          destination: "Mapocho",
-          estimatedArrival: "20 min",
-        },
-        {
-          id: "303",
-          name: "303",
-          destination: "Quilicura",
-          estimatedArrival: "25 min",
-        },
-      ]
-      setMicroRoutes(mockMicroRoutes)
+    setError(null)
+    
+    try {
+      const response = await fetch(`https://api.xor.cl/red/bus-stop/${busStopId}`)
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`)
+      }
+      
+      const data: BusStop = await response.json()
+      setBusStopInfo(data)
+      
+      // Transform the API data to our component structure
+      const transformedRoutes: MicroRoute[] = data.services.map(service => {
+        // Extract the first bus arrival time (if any)
+        const firstBus = service.buses[0]
+        let estimatedArrival = "No disponible"
+        
+        if (service.valid && firstBus) {
+          if (firstBus.min_arrival_time === 0) {
+            estimatedArrival = "Llegando"
+          } else {
+            estimatedArrival = `${firstBus.min_arrival_time}-${firstBus.max_arrival_time} min`
+          }
+        }
+        
+        return {
+          id: service.id,
+          name: service.id,
+          destination: service.valid ? "En servicio" : "Fuera de servicio",
+          estimatedArrival,
+          valid: service.valid,
+          status: service.status_description,
+          buses: service.buses
+        }
+      })
+      
+      // Sort by valid services first, then by arrival time
+      transformedRoutes.sort((a, b) => {
+        if (a.valid !== b.valid) return a.valid ? -1 : 1
+        
+        if (a.valid && b.valid) {
+          const aTime = a.buses[0]?.min_arrival_time ?? Infinity
+          const bTime = b.buses[0]?.min_arrival_time ?? Infinity
+          return aTime - bTime
+        }
+        
+        return 0
+      })
+      
+      setMicroRoutes(transformedRoutes)
+    } catch (err) {
+      console.error("Error fetching bus data:", err)
+      setError("No se pudo obtener información de buses. Intente nuevamente.")
+    } finally {
       setIsLoading(false)
-    }, 1000)
-  }, [])
-
-  // Auto-focus en el input al cargar
-  useEffect(() => {
-    if (inputRef.current && mode === "input") {
-      setTimeout(() => {
-        inputRef.current?.focus()
-      }, 500)
     }
-  }, [mode])
+  }
+
+  // Initial fetch
+  useEffect(() => {
+    fetchBusData()
+  }, [busStopId])
 
   // Detectar cuando el teclado está visible
   useEffect(() => {
@@ -160,30 +166,17 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
     }
   }, [keyboardVisible])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDestino(e.target.value)
-  }
-
-  const handleSelectSugerencia = (sugerencia: string) => {
-    // Vibración táctil
-    if ("vibrate" in navigator) {
-      navigator.vibrate(10)
-    }
-    setDestino(sugerencia)
-    setSugerencias([])
-  }
-
   const handleSelectMicro = (micro: MicroRoute) => {
     // Vibración táctil
     if ("vibrate" in navigator) {
       navigator.vibrate(10)
     }
     setSelectedMicro(micro)
-    setDestino(`${micro.name} → ${micro.destination}`)
+    setDestino(`${micro.name} → ${busStopInfo?.name || ""}`)
   }
 
   const handleConfirm = () => {
-    if ((mode === "input" && destino.trim()) || (mode === "micro" && selectedMicro)) {
+    if (selectedMicro) {
       // Vibración táctil
       if ("vibrate" in navigator) {
         navigator.vibrate(15)
@@ -192,12 +185,13 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
     }
   }
 
-  const handleModeChange = (newMode: "input" | "micro") => {
-    // Vibración táctil
-    if ("vibrate" in navigator) {
-      navigator.vibrate(8)
+  // Calculate distance text
+  const formatDistance = (meters: number): string => {
+    if (meters < 1000) {
+      return `${meters}m`
+    } else {
+      return `${(meters / 1000).toFixed(1)}km`
     }
-    setMode(newMode)
   }
 
   // Efecto de parallax para el fondo
@@ -262,153 +256,99 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
         transition={{ duration: 0.3 }}
       >
         <motion.div
-          className="w-full max-w-md vision-card p-6"
-          variants={cardVariants} // Apply card variants
+          className="w-full max-w-md vision-card p-6 relative"
+          variants={cardVariants}
           initial="hidden"
           animate="visible"
         >
-          <motion.h2
-            className="text-2xl font-bold mb-6 text-center tracking-tight flex items-center justify-center"
-            variants={itemVariants} // Apply item variants
-          >
-            <span className="mr-2 text-2xl">🔍</span> Seleccionar Destino
-          </motion.h2>
+          {/* Reload indicator */}
+          <div className="absolute top-4 right-4">
+            <ReloadIndicator onReload={fetchBusData} reloadInterval={5000} />
+          </div>
 
-          <motion.div
-            className="segmented-control mb-6 border-radius-lg"
-            style={{
-              borderRadius: "18px",
-            }}
-            variants={itemVariants} // Apply item variants
-          >
-            <button
-              className={`segmented-control-option ${mode === "micro" ? "active" : ""}`}
-              onClick={() => handleModeChange("micro")}
-            >
-              Seleccionar micro
-            </button>
-            <button
-              className={`segmented-control-option ${mode === "input" ? "active" : ""}`}
-              onClick={() => handleModeChange("input")}
-            >
-              Buscar destino
-            </button>
+          <motion.div className="mb-6" variants={itemVariants}>
+            <h2 className="text-2xl font-bold mb-1 text-center tracking-tight">
+              <span className="mr-2 text-2xl">🚏</span> {busStopInfo?.name || "Cargando paradero..."}
+            </h2>
+            {busStopInfo && (
+              <p className="text-sm text-center text-gray-500">{busStopInfo.id}</p>
+            )}
           </motion.div>
 
-          {/* Wrap content area for variant application */}
+          {/* Content area */}
           <motion.div variants={itemVariants}>
-            <AnimatePresence mode="wait">
-              {mode === "input" ? (
-                <motion.div
-                  key="input-mode"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative h-[360px] overflow-y-auto pr-1"
-                >
-                  <div
-                    className={`relative transition-all duration-300 scale-[0.97] ${isFocused ? "scale-[1]" : ""}`}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="relative h-[400px] overflow-y-auto pr-1"
+            >
+              {isLoading && microRoutes.length === 0 ? (
+                <div className="flex justify-center items-center h-full">
+                  <svg
+                    className="animate-spin h-8 w-8 text-black"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
                   >
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={destino}
-                      onChange={handleInputChange}
-                      onFocus={() => setIsFocused(true)}
-                      onBlur={() => setIsFocused(false)}
-                      placeholder="¿A dónde vas?"
-                      className="apple-input"
-                      aria-label="Destino"
-                    />
-                  </div>
-
-                  <AnimatePresence>
-                    {sugerencias.length > 0 && (
-                      <motion.ul
-                        className="mt-2 bg-white/90 backdrop-blur-md rounded-2xl shadow-vision overflow-hidden"
-                        initial={{ y: -10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: -10, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        style={{
-                          border: "1px solid rgba(255, 255, 255, 0.5)",
-                        }}
-                      >
-                        {sugerencias.map((sugerencia, index) => (
-                          <motion.li
-                            key={index}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            onClick={() => handleSelectSugerencia(sugerencia)}
-                            className="apple-list-item hover:bg-accent/10"
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            {sugerencia}
-                          </motion.li>
-                        ))}
-                      </motion.ul>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col justify-center items-center h-full text-center">
+                  <span className="text-3xl mb-3">⚠️</span>
+                  <p className="text-gray-700">{error}</p>
+                </div>
+              ) : microRoutes.length === 0 ? (
+                <div className="flex flex-col justify-center items-center h-full text-center">
+                  <span className="text-3xl mb-3">🚫</span>
+                  <p className="text-gray-700">No hay buses disponibles en este momento.</p>
+                </div>
               ) : (
-                <motion.div
-                  key="micro-mode"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative h-[360px] overflow-y-auto pr-1"
-                >
-                  {isLoading ? (
-                    <div className="flex justify-center items-center h-full">
-                      <svg
-                        className="animate-spin h-8 w-8 text-black"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
+                <div className="space-y-3">
+                  {microRoutes.map((micro, index) => {
+                    const isSelected = selectedMicro?.id === micro.id
+                    return (
+                      <motion.div
+                        key={micro.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`${!micro.valid ? "opacity-60" : ""} flex items-center justify-between p-4 rounded-xl cursor-pointer transition-colors duration-150 ${isSelected
+                            ? "bg-black text-white"
+                            : "bg-white/50 hover:bg-gray-100 shadow-md"
+                          }`}
+                        onClick={() => micro.valid && handleSelectMicro(micro)}
+                        whileTap={{ scale: micro.valid ? 0.98 : 1 }}
                       >
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {microRoutes.map((micro, index) => {
-                        const isSelected = selectedMicro?.id === micro.id
-                        return (
-                          <motion.div
-                            key={micro.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-colors duration-150 ${isSelected
-                                ? "bg-black text-white"
-                                : "bg-white/50 hover:bg-gray-100 shadow-md"
-                              }`}
-                            onClick={() => handleSelectMicro(micro)}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center">
-                                <span className="text-xl mr-2">🚌</span>
-                                <span className={`font-semibold text-lg ${isSelected ? "text-white" : ""}`}>
-                                  {micro.name}
-                                </span>
-                              </div>
-                              <div className={`text-sm mt-1 ${isSelected ? "text-gray-300" : "text-gray"}`}>
-                                → {micro.destination}
-                              </div>
-                            </div>
-                            <div className="text-right">
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <span className="text-xl mr-2">🚌</span>
+                            <span className={`font-semibold text-lg ${isSelected ? "text-white" : ""}`}>
+                              {micro.name}
+                            </span>
+                          </div>
+                          <div className={`text-sm mt-1 ${isSelected ? "text-gray-300" : "text-gray-500"}`}>
+                            {micro.status}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {micro.valid ? (
+                            <>
                               <div className={`font-medium ${isSelected ? "text-white" : "text-accent"}`}>
                                 {micro.estimatedArrival}
                               </div>
+                              {micro.buses.length > 0 && (
+                                <div className={`text-xs ${isSelected ? "text-gray-300" : "text-gray-500"}`}>
+                                  {formatDistance(micro.buses[0].meters_distance)}
+                                </div>
+                              )}
                               <div className="flex items-center justify-end mt-1">
                                 <span className="relative flex h-2 w-2 mr-1">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -418,26 +358,30 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
                                   en vivo
                                 </span>
                               </div>
+                            </>
+                          ) : (
+                            <div className={`text-sm font-medium ${isSelected ? "text-white" : "text-gray-500"}`}>
+                              No disponible
                             </div>
-                          </motion.div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </motion.div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </div>
               )}
-            </AnimatePresence>
+            </motion.div>
           </motion.div>
 
           <motion.button
             onClick={handleConfirm}
-            disabled={(mode === "input" && !destino.trim()) || (mode === "micro" && !selectedMicro)}
-            className={`apple-button w-full py-4 mt-6 font-medium text-lg ${(mode === "input" && destino.trim()) || (mode === "micro" && selectedMicro)
+            disabled={!selectedMicro}
+            className={`apple-button w-full py-4 mt-6 font-medium text-lg ${selectedMicro
               ? "bg-black text-white hover:bg-white hover:text-black hover:border-2 hover:border-black hover:shadow-lg"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
               } transition-colors`}
             whileTap={{
-              scale: (mode === "input" && destino.trim()) || (mode === "micro" && selectedMicro) ? 0.98 : 1,
+              scale: selectedMicro ? 0.98 : 1,
             }}
           >
             Confirmar

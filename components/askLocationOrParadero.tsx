@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import PermitirUbicacion from "./askLocation"
-import SelectParadero from "./selectParadero"
+import { AnimatePresence } from "framer-motion"
+import AskLocation from "./askLocation"
+import AskParadero from "./askParadero"
 
 export type LocationResult = 
   | { type: "location"; position: GeolocationPosition }
@@ -24,7 +25,6 @@ export default function AskLocationOrParadero({
     if (position) {
       onResult({ type: "location", position });
     } else {
-      // If user chose to continue without location, switch to paradero selection
       setView("paradero");
     }
   };
@@ -42,21 +42,23 @@ export default function AskLocationOrParadero({
   };
 
   return (
-    <>
-      {view === "location" && (
-        <PermitirUbicacion 
-          onPermission={handleLocationPermission}
-          onProceedWithoutLocation={() => setView("paradero")}
-          forceAllowNextStep={forceAllowNextStep}
-        />
-      )}
-      
-      {view === "paradero" && (
-        <SelectParadero 
-          onParaderoSelected={handleParaderoSelected}
-          onBack={handleBack}
-        />
-      )}
-    </>
+    <div className="relative">
+      <AnimatePresence mode="wait" initial={false}>
+        {view === "location" ? (
+          <AskLocation 
+            key="location"
+            onPermission={handleLocationPermission}
+            onProceedWithoutLocation={() => setView("paradero")}
+            forceAllowNextStep={forceAllowNextStep}
+          />
+        ) : (
+          <AskParadero 
+            key="paradero"
+            onParaderoSelected={handleParaderoSelected}
+            onBack={handleBack}
+          />
+        )}
+      </AnimatePresence>
+    </div>
   );
 } 

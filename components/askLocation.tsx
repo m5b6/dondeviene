@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import MapPlaceholder from "./mapLoading"
 import { motion } from "framer-motion"
 import { usePreciseGeolocation } from "../hooks/useGeolocation"
+import CardLayout from "./cardLayout"
 
 interface PermitirUbicacionProps {
   onPermission: (position: GeolocationPosition | null) => void;
@@ -12,13 +12,26 @@ interface PermitirUbicacionProps {
   forceAllowNextStep?: boolean;
 }
 
-export default function PermitirUbicacion({ 
+// Animation variants for content transition
+const contentVariants = {
+  enter: { 
+    opacity: 1, 
+    x: 0,
+    transition: { duration: 0.3, ease: "easeOut" }
+  },
+  exit: { 
+    opacity: 0, 
+    x: -20,
+    transition: { duration: 0.2, ease: "easeIn" }
+  }
+};
+
+export default function AskLocation({ 
   onPermission, 
   onRetry, 
   onProceedWithoutLocation, 
   forceAllowNextStep = false
 }: PermitirUbicacionProps) {
-  const [hasVibrated, setHasVibrated] = useState(false)
   const [buttonLoading, setButtonLoading] = useState(false)
   
   const { 
@@ -42,20 +55,6 @@ export default function PermitirUbicacion({
       setButtonLoading(false);
     }
   }, [error, permission]);
-
-  // Handle vibration effect
-  useEffect(() => {
-    if (!hasVibrated && "vibrate" in navigator) {
-      try {
-        if (document.hasFocus()) {
-          navigator.vibrate(10) // Vibración sutil
-        }
-        setHasVibrated(true)
-      } catch (e) {
-        setHasVibrated(true)
-      }
-    }
-  }, [hasVibrated])
 
   const handlePermitir = () => {
     // Set button to loading state
@@ -112,111 +111,47 @@ export default function PermitirUbicacion({
     return "Error al obtener tu ubicación. Intenta de nuevo."
   }
 
-  // Efecto de parallax para el fondo
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 10
-      const y = (e.clientY / window.innerHeight - 0.5) * 10
-      setOffset({ x, y })
-    }
-
-    const handleDeviceOrientation = (e: DeviceOrientationEvent) => {
-      if (e.beta && e.gamma) {
-        const x = (e.gamma / 45) * 10
-        const y = (e.beta / 45) * 10
-        setOffset({ x, y })
-      }
-    }
-
-    window.addEventListener("mousemove", handleMouseMove)
-    window.addEventListener("deviceorientation", handleDeviceOrientation)
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove)
-      window.removeEventListener("deviceorientation", handleDeviceOrientation)
-    }
-  }, [])
-
   const permissionError = getErrorMessage();
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
-      {/* Fondo con mapa borroso y efecto parallax */}
+    <CardLayout>
       <motion.div
-        className="absolute inset-0 filter blur-md"
-        animate={{
-          x: offset.x,
-          y: offset.y,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 100,
-          damping: 30,
-        }}
+        initial={{ opacity: 0, x: -20 }}
+        animate="enter"
+        exit="exit"
+        variants={contentVariants}
+        className="flex flex-col h-[465px]"
       >
-        <MapPlaceholder />
-      </motion.div>
-
-      {/* Modal */}
-      <motion.div
-        className="absolute inset-0 flex items-center justify-center p-6 pt-safe pb-safe"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-      >
-        <motion.div
-          className="w-full max-w-md vision-card p-8"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-        >
-
-          <motion.h1
-            className="text-3xl font-bold text-center mb-4 tracking-tight flex items-center justify-center whitespace-nowrap"
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-          >
+        {/* Header area */}
+        <div>
+          <h1 className="text-3xl font-bold text-center mb-4 tracking-tight flex items-center justify-center whitespace-nowrap">
             ¿Podemos ver<br /> tu ubicación?
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            className="text-xl text-center mb-8 text-gray font-light"
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-          >
+          <p className="text-xl text-center mb-8 text-gray font-light">
             Para mostrarte tu paradero más cercano
-          </motion.p>
+          </p>
+        </div>
 
-          <motion.div
-            className="w-full space-y-4"
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-          >
+        {/* Main content and button area */}
+        <div className="flex-1 flex flex-col justify-between">
+          {/* Content area */}
+          <div className="mb-auto">
             {permissionError && (
-              <motion.div
-                className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
+              <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
                 {permissionError}
                 {forceAllowNextStep && (
                   <span className="block mt-2">
                     Puedes continuar sin ubicación para seleccionar tu paradero manualmente.
                   </span>
                 )}
-              </motion.div>
+              </div>
             )}
 
             <button
               onClick={handlePermitir}
               disabled={buttonLoading}
-              className="apple-button w-full py-4 border-2 border-black text-black font-medium text-lg hover:bg-black hover:text-white transition-colors  hover:shadow-lg active:scale-[0.98]"
+              className="apple-button w-full py-4 border-2 border-black text-black font-medium text-lg hover:bg-black hover:text-white transition-colors hover:shadow-lg active:scale-[0.98]"
             >
               {buttonLoading ? (
                 <span className="flex items-center justify-center">
@@ -246,16 +181,17 @@ export default function PermitirUbicacion({
                 error ? "Reintentar" : "Permitir"
               )}
             </button>
+          </div>
 
-            <button
-              onClick={handleSkip}
-              className="apple-button w-full py-3 text-gray-500 text-sm font-medium hover:text-black transition-colors"
-            >
-              Seleccionar manualmente
-            </button>
-          </motion.div>
-        </motion.div>
+          {/* Secondary button - fixed at bottom */}
+          <button
+            onClick={handleSkip}
+            className="apple-button w-full py-3 text-gray-500 text-sm font-medium hover:text-black transition-colors"
+          >
+            Seleccionar manualmente
+          </button>
+        </div>
       </motion.div>
-    </div>
+    </CardLayout>
   )
 }

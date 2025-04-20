@@ -35,15 +35,28 @@ export const getRouteLineLayer = (): LayerProps => ({
       0, '#60a5fa',  // Lighter blue at start
       0.5, '#3b82f6', // Primary blue in middle
       1, '#2563eb'    // Darker blue at end
-    ],
-    // Add rounded line joins for smoother appearance
-    'line-join': 'round',
-    'line-cap': 'round'
+    ]
   },
   layout: {
     'line-cap': 'round',
     'line-join': 'round'
   }
+});
+
+/**
+ * Creates a GeoJSON source with lineMetrics enabled for use with line gradients
+ */
+export const getRouteSource = (routeData: RouteData | null) => ({
+  type: 'geojson',
+  data: routeData || {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'LineString',
+      coordinates: []
+    }
+  },
+  lineMetrics: true
 });
 
 /**
