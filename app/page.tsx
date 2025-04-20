@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import PermitirUbicacion from "@/components/permitir-ubicacion"
 import ConfirmarParadero from "@/components/confirmar-paradero"
 import SeleccionarDestino from "@/components/seleccionar-destino"
@@ -13,6 +13,18 @@ export default function Home() {
   const [selectedParadero, setSelectedParadero] = useState<{ id: string; distance: number } | null>(null)
   const [destination, setDestination] = useState("")
   const [isTransitioning, setIsTransitioning] = useState(false)
+
+  // Asegurar que la aplicación respete el safe area en iOS
+  useEffect(() => {
+    // Agregar meta viewport para iOS
+    const meta = document.createElement("meta")
+    meta.name = "viewport"
+    meta.content = "width=device-width, initial-scale=1, viewport-fit=cover"
+    document.getElementsByTagName("head")[0].appendChild(meta)
+
+    // Agregar clase para manejar el safe area
+    document.body.classList.add("pb-safe")
+  }, [])
 
   const handleLocationPermission = (position: GeolocationPosition | null) => {
     setIsTransitioning(true)
@@ -76,6 +88,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            className="h-screen"
           >
             <PermitirUbicacion onPermission={handleLocationPermission} />
           </motion.div>
@@ -88,6 +101,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            className="h-screen"
           >
             <ConfirmarParadero location={location} onConfirm={handleParaderoConfirm} />
           </motion.div>
@@ -100,6 +114,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            className="h-screen"
           >
             <SeleccionarDestino onConfirm={handleDestinationConfirm} />
           </motion.div>
@@ -112,6 +127,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            className="h-screen"
           >
             <ActivarAlertas paradero={selectedParadero?.id || ""} destino={destination} onComplete={handleComplete} />
           </motion.div>

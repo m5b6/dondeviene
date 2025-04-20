@@ -35,16 +35,29 @@ export default function ConfirmarParadero({ location, onConfirm }: ConfirmarPara
       setParaderos(mockParaderos)
       setSelectedParadero(mockParaderos[0])
       setIsLoading(false)
+
+      // Vibración táctil al cargar los datos
+      if ("vibrate" in navigator) {
+        navigator.vibrate(10)
+      }
     }, 1000)
   }, [location])
 
   const handleConfirm = () => {
     if (selectedParadero) {
+      // Vibración táctil
+      if ("vibrate" in navigator) {
+        navigator.vibrate(15)
+      }
       onConfirm(selectedParadero)
     }
   }
 
   const handleSelectParadero = (paradero: ParaderoInfo) => {
+    // Vibración táctil
+    if ("vibrate" in navigator) {
+      navigator.vibrate(5)
+    }
     setSelectedParadero(paradero)
   }
 
@@ -57,12 +70,17 @@ export default function ConfirmarParadero({ location, onConfirm }: ConfirmarPara
 
       {/* Tarjeta superpuesta */}
       <motion.div
-        className="bg-white/90 backdrop-blur-xl w-full rounded-t-3xl shadow-apple-sm p-6 flex flex-col"
+        className="bg-white/90 backdrop-blur-xl w-full rounded-t-3xl shadow-vision p-6 pb-safe"
         initial={{ y: 100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        style={{
+          borderTop: "1px solid rgba(255, 255, 255, 0.5)",
+        }}
       >
-        <h2 className="text-2xl font-bold mb-6 tracking-tight">¿Este es tu paradero?</h2>
+        <h2 className="text-2xl font-bold mb-6 tracking-tight flex items-center">
+          <span className="mr-2 text-2xl">🚏</span> ¿Este es tu paradero?
+        </h2>
 
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
@@ -94,8 +112,10 @@ export default function ConfirmarParadero({ location, onConfirm }: ConfirmarPara
                     className={`apple-list-item ${
                       selectedParadero?.id === paradero.id ? "bg-black text-white" : "hover:bg-gray-100"
                     }`}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <div className="text-lg font-medium tracking-tight">
+                    <div className="text-lg font-medium tracking-tight flex items-center">
+                      <span className="mr-2 text-xl">🚌</span>
                       {paradero.id} — {paradero.distance} m
                     </div>
                   </motion.li>
@@ -111,9 +131,9 @@ export default function ConfirmarParadero({ location, onConfirm }: ConfirmarPara
           className={`apple-button w-full py-4 mt-6 font-medium text-lg transition-all ${
             !selectedParadero || isLoading
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-black text-white hover:bg-white hover:text-black hover:border-2 hover:border-black"
+              : "bg-black text-white hover:bg-white hover:text-black hover:border-2 hover:border-black hover:shadow-lg active:scale-[0.98]"
           }`}
-          whileTap={{ scale: 0.98 }}
+          whileTap={{ scale: !selectedParadero || isLoading ? 1 : 0.98 }}
         >
           Sí, es este
         </motion.button>

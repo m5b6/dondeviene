@@ -6,7 +6,12 @@
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 245, 245, 247;
   --gray-text: 102, 102, 102;
+  --accent-color: 52, 199, 181;
   --transition-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 body {
@@ -17,6 +22,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   letter-spacing: -0.01em;
+  overflow-x: hidden;
 }
 
 h1,
@@ -67,6 +73,7 @@ button {
 .apple-button {
   @apply rounded-2xl font-medium transition-all duration-300;
   letter-spacing: -0.01em;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 }
 
 .apple-button:active {
@@ -77,6 +84,13 @@ button {
 .apple-card {
   @apply bg-white/90 backdrop-blur-xl rounded-3xl shadow-sm;
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
+}
+
+/* VisionOS-style card */
+.vision-card {
+  @apply bg-white/80 backdrop-blur-xl rounded-3xl;
+  box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.1), 0 12px 48px -4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 /* Apple-style toggle */
@@ -91,17 +105,76 @@ button {
 
 /* Apple-style input */
 .apple-input {
-  @apply w-full py-3 text-xl border-b-2 border-black/10 focus:border-black focus:outline-none transition-colors duration-300;
+  @apply w-full py-3 text-xl border-b-2 border-black/10 focus:border-accent focus:outline-none transition-colors duration-300;
   letter-spacing: -0.02em;
 }
 
 /* Apple-style list item */
 .apple-list-item {
   @apply py-4 px-3 rounded-xl transition-colors duration-200 cursor-pointer;
+  min-height: 44px; /* Apple's minimum touch target size */
 }
 
 .apple-list-item:active {
   transform: scale(0.99);
+}
+
+/* Apple-style segmented control */
+.segmented-control {
+  @apply flex rounded-xl overflow-hidden bg-gray-100 p-1;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.segmented-control-option {
+  @apply flex-1 py-2 px-3 text-center text-sm font-medium transition-all duration-200 rounded-lg;
+  min-height: 36px;
+}
+
+.segmented-control-option.active {
+  @apply bg-white text-black shadow-sm;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.segmented-control-option:not(.active) {
+  @apply text-gray;
+}
+
+/* Micro route item */
+.micro-route-item {
+  @apply flex items-center p-3 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 mb-3 transition-all duration-200;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.micro-route-item:active {
+  transform: scale(0.98);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.micro-route-item.selected {
+  @apply border-accent bg-accent/5;
+  box-shadow: 0 2px 12px rgba(52, 199, 181, 0.15);
+}
+
+/* Safe area utilities */
+.pb-safe {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: calc(1rem + env(safe-area-inset-top, 0px));
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mt-safe {
+  margin-top: env(safe-area-inset-top, 0px);
+}
+
+/* VisionOS-inspired gradient */
+.vision-gradient {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2));
 }
 
 @layer utilities {
@@ -124,13 +197,13 @@ button {
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
     --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
+    --accent: 52 199 181;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --ring: 52 199 181;
     --radius: 1rem;
   }
 }

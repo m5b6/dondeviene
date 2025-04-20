@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import MapPlaceholder from "./map-placeholder"
 import { motion } from "framer-motion"
 
@@ -10,9 +10,24 @@ interface PermitirUbicacionProps {
 
 export default function PermitirUbicacion({ onPermission }: PermitirUbicacionProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [hasVibrated, setHasVibrated] = useState(false)
+
+  // Efecto para vibración al cargar
+  useEffect(() => {
+    if (!hasVibrated && "vibrate" in navigator) {
+      navigator.vibrate(10) // Vibración sutil
+      setHasVibrated(true)
+    }
+  }, [hasVibrated])
 
   const handlePermitir = () => {
     setIsLoading(true)
+
+    // Vibración táctil
+    if ("vibrate" in navigator) {
+      navigator.vibrate(15)
+    }
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -24,6 +39,7 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
           setIsLoading(false)
           onPermission(null)
         },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
       )
     } else {
       console.error("Geolocalización no soportada")
@@ -33,36 +49,78 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
   }
 
   const handleSkip = () => {
+    // Vibración táctil
+    if ("vibrate" in navigator) {
+      navigator.vibrate(10)
+    }
     onPermission(null)
   }
 
+  // Efecto de parallax para el fondo
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 10
+      const y = (e.clientY / window.innerHeight - 0.5) * 10
+      setOffset({ x, y })
+    }
+
+    const handleDeviceOrientation = (e: DeviceOrientationEvent) => {
+      if (e.beta && e.gamma) {
+        const x = (e.gamma / 45) * 10
+        const y = (e.beta / 45) * 10
+        setOffset({ x, y })
+      }
+    }
+
+    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("deviceorientation", handleDeviceOrientation)
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("deviceorientation", handleDeviceOrientation)
+    }
+  }, [])
+
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {/* Fondo con mapa borroso */}
-      <div className="absolute inset-0 filter blur-md">
+      {/* Fondo con mapa borroso y efecto parallax */}
+      <motion.div
+        className="absolute inset-0 filter blur-md"
+        animate={{
+          x: offset.x,
+          y: offset.y,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 100,
+          damping: 30,
+        }}
+      >
         <MapPlaceholder />
-      </div>
+      </motion.div>
 
       {/* Modal */}
       <motion.div
-        className="absolute inset-0 flex items-center justify-center p-6"
+        className="absolute inset-0 flex items-center justify-center p-6 pt-safe pb-safe"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
       >
         <motion.div
-          className="w-full max-w-md apple-card p-8"
+          className="w-full max-w-md vision-card p-8"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
         >
           <motion.h1
-            className="text-3xl font-bold text-center mb-4 tracking-tight"
+            className="text-3xl font-bold text-center mb-4 tracking-tight flex items-center justify-center"
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            ¿Podemos usar tu ubicación?
+            <span className="mr-2 text-2xl">📍</span> ¿Podemos usar tu ubicación?
           </motion.h1>
 
           <motion.p
@@ -83,7 +141,7 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
             <button
               onClick={handlePermitir}
               disabled={isLoading}
-              className="apple-button w-full py-4 border-2 border-black text-black font-medium text-lg hover:bg-black hover:text-white transition-colors"
+              className="apple-button w-full py-4 border-2 border-black text-black font-medium text-lg hover:bg-black hover:text-white transition-colors hover:border-accent hover:shadow-lg active:scale-[0.98]"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -116,7 +174,7 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
 
             <button
               onClick={handleSkip}
-              className="apple-button w-full py-4 text-gray font-medium text-lg hover:text-black transition-colors"
+              className="apple-button w-full py-4 text-gray font-medium text-lg hover:text-black transition-colors active:scale-[0.98]"
             >
               No ahora
             </button>

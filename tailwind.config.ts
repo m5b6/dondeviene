@@ -33,7 +33,8 @@ const config: Config = {
           foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
+          DEFAULT: "rgb(var(--accent-color))",
+          light: "rgba(var(--accent-color), 0.2)",
           foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
@@ -61,6 +62,7 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
         "2xl": "16px",
         "3xl": "24px",
+        "4xl": "32px",
       },
       fontFamily: {
         sans: [
@@ -75,10 +77,17 @@ const config: Config = {
       boxShadow: {
         apple: "0 4px 30px rgba(0, 0, 0, 0.1)",
         "apple-sm": "0 2px 10px rgba(0, 0, 0, 0.05)",
+        vision: "0 4px 24px -6px rgba(0, 0, 0, 0.1), 0 12px 48px -4px rgba(0, 0, 0, 0.1)",
       },
       animation: {
         "fade-in": "fadeIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
         "slide-up": "slideUp 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
+      },
+      spacing: {
+        "safe-bottom": "var(--safe-bottom)",
+        "safe-top": "var(--safe-top)",
+        "safe-left": "var(--safe-left)",
+        "safe-right": "var(--safe-right)",
       },
     },
   },
