@@ -6,7 +6,6 @@ import ConfirmarParadero from "@/components/confirmar-paradero"
 import SeleccionarDestino from "@/components/seleccionar-destino"
 import ActivarAlertas from "@/components/activar-alertas"
 import { AnimatePresence, motion } from "framer-motion"
-import { useViewportMeta } from "@/hooks/useViewportMeta"
 import { useGeolocationPermissionCheck } from "@/hooks/useGeolocationPermissionCheck"
 
 export default function Home() {
@@ -16,7 +15,6 @@ export default function Home() {
   const [destination, setDestination] = useState("")
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  useViewportMeta()
   const { permission: initialPermission, position: initialPosition } = useGeolocationPermissionCheck()
 
   useEffect(() => {
@@ -77,7 +75,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-off-white text-black pb-safe">
+    <main className="min-h-screen bg-off-white text-black pb-[env(safe-area-inset-bottom)]">
       <AnimatePresence mode="wait">
         {isTransitioning ? (
           <motion.div
