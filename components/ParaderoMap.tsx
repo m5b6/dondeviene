@@ -17,26 +17,6 @@ interface ParaderoMapProps {
   onConfirm: (paradero: string) => void;
 }
 
-// Animation variants for content transition
-const contentVariants = {
-  enter: {
-    x: 0,
-    opacity: 1,
-    transition: {
-      x: { type: "spring", stiffness: 300, damping: 30 },
-      opacity: { duration: 0.3 }
-    }
-  },
-  exit: {
-    x: 30,
-    opacity: 0,
-    transition: {
-      x: { duration: 0.25 },
-      opacity: { duration: 0.25 }
-    }
-  }
-};
-
 export default function ParaderoMap({ 
   selectedParadero, 
   userLocation,
@@ -49,24 +29,25 @@ export default function ParaderoMap({
 
   // Extract user coordinates
   useEffect(() => {
-    if (userLocation) {
+    // Only set user location if the paradero was selected from the location-based list
+    if (userLocation && typeof selectedParadero !== 'string' && 'distance' in selectedParadero) {
       setMapUserLocation({
         latitude: userLocation.coords.latitude,
         longitude: userLocation.coords.longitude
       });
+    } else {
+      setMapUserLocation(null);
     }
-  }, [userLocation]);
+  }, [userLocation, selectedParadero]);
 
   // Fetch paradero info if needed
   useEffect(() => {
     const fetchParaderoInfo = async () => {
-      // If paradero is already a ParaderoInfo object, use it directly
       if (typeof selectedParadero !== 'string') {
         setSelectedParaderoInfo(selectedParadero);
         return;
       }
       
-      // Otherwise fetch the paradero location by code
       try {
         setMapLoading(true);
         const paraderoInfo = await fetchParaderoByCode(selectedParadero);
@@ -106,23 +87,19 @@ export default function ParaderoMap({
   };
 
   // Function to render a color badge for bus services
-  const renderColorBadge = (color: string) => {
+  const renderColorBadge = (color: string, service: string) => {
     return (
       <div 
-        className="w-3 h-3 rounded-full mr-2 flex-shrink-0" 
+        className="px-2 py-1 rounded-full text-white text-sm font-mono font-bold shadow-sm"
         style={{ backgroundColor: color }}
-      />
+      >
+        {service}
+      </div>
     );
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate="enter"
-      exit="exit"
-      variants={contentVariants}
-      className="flex flex-col h-[465px]"
-    >
+    <div className="flex flex-col h-full">
       {/* Map view when a paradero is selected */}
       <div className="h-full flex flex-col">
         <div className="pb-2">
@@ -173,9 +150,8 @@ export default function ParaderoMap({
               <div className="divide-y divide-gray-100">
                 {selectedParaderoInfo.buses.map((bus, index) => (
                   <div key={index} className="p-2 flex items-center">
-                    <div className="flex items-center mr-3">
-                      {renderColorBadge(bus.color)}
-                      <span className="font-mono font-bold">{bus.service}</span>
+                    <div className="mr-3">
+                      {renderColorBadge(bus.color, bus.service)}
                     </div>
                     
                     <div className="flex-1 text-sm">
@@ -219,6 +195,6 @@ export default function ParaderoMap({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 } 

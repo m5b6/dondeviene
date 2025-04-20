@@ -97,22 +97,31 @@ export default function MapaParaderos({
 
   // Fit bounds when paradero is selected
   useEffect(() => {
-    // Only run when we have both locations and map is ready
-    if (!mapRef.current || !userLocation || !selectedParadero) {
+    if (!mapRef.current || !selectedParadero) {
       return;
     }
-    
-    try {
-      const bounds = [
-        [Math.min(userLocation.longitude, selectedParadero.pos[1]), Math.min(userLocation.latitude, selectedParadero.pos[0])],
-        [Math.max(userLocation.longitude, selectedParadero.pos[1]), Math.max(userLocation.latitude, selectedParadero.pos[0])]
-      ];
-      mapRef.current.fitBounds(bounds, {
-        padding: { top: 80, bottom: 80, left: 80, right: 80 },
+
+    if (userLocation) {
+      // If we have user location, fit bounds to show both markers
+      try {
+        const bounds = [
+          [Math.min(userLocation.longitude, selectedParadero.pos[1]), Math.min(userLocation.latitude, selectedParadero.pos[0])],
+          [Math.max(userLocation.longitude, selectedParadero.pos[1]), Math.max(userLocation.latitude, selectedParadero.pos[0])]
+        ];
+        mapRef.current.fitBounds(bounds, {
+          padding: { top: 80, bottom: 80, left: 80, right: 80 },
+          duration: 1000
+        });
+      } catch (err) {
+        console.error('Error fitting bounds:', err);
+      }
+    } else {
+      // If we only have the paradero, zoom in closer to it
+      mapRef.current.flyTo({
+        center: [selectedParadero.pos[1], selectedParadero.pos[0]],
+        zoom: 17,
         duration: 1000
       });
-    } catch (err) {
- 
     }
   }, [selectedParadero?.pos[0], selectedParadero?.pos[1], userLocation?.latitude, userLocation?.longitude]);
   
@@ -181,9 +190,9 @@ export default function MapaParaderos({
         ref={mapRef}
         mapboxAccessToken={PUBLIC_MAPBOX_TOKEN}
         initialViewState={{
-          longitude: userLocation?.longitude || -70.67,
-          latitude: userLocation?.latitude || -33.45,
-          zoom: userLocation ? 15 : 12
+          longitude: selectedParadero?.pos[1] || -70.67,
+          latitude: selectedParadero?.pos[0] || -33.45,
+          zoom: userLocation ? 15 : 17
         }}
         style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/mapbox/dark-v11"

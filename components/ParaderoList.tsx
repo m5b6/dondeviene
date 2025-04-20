@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { ParaderoInfo, fetchNearbyParaderos } from '../lib/fetch-paraderos'
 
 interface ParaderoListProps {
@@ -11,24 +11,21 @@ interface ParaderoListProps {
     onBack: () => void;
 }
 
-// Animation variants for content transition
-const contentVariants = {
-    enter: {
-        x: 0,
-        opacity: 1,
-        transition: {
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.3 }
-        }
-    },
-    exit: {
-        x: -30,
+// Animation variants for list items
+const listItemVariants = {
+    hidden: { 
         opacity: 0,
+        y: 20
+    },
+    visible: (i: number) => ({
+        opacity: 1,
+        y: 0,
         transition: {
-            x: { duration: 0.25 },
-            opacity: { duration: 0.25 }
+            delay: i * 0.05,
+            duration: 0.3,
+            ease: "easeOut"
         }
-    }
+    })
 };
 
 export default function ParaderoList({
@@ -158,19 +155,13 @@ export default function ParaderoList({
     const showLocationSearch = !!userLocation && !forceManualMode;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate="enter"
-            exit="exit"
-            variants={contentVariants}
-            className="flex flex-col h-full"
-        >
+        <div className="flex flex-col h-full">
             {/* Header area */}
             <div>
                 <h1 className="text-3xl font-bold text-center mb-4 tracking-tight flex items-center justify-center whitespace-nowrap">
                     {showLocationSearch ?
                         "Paraderos cercanos" :
-                        <><span>Busca tu paradero</span></>
+                        <><span>Todos los paraderos</span></>
                     }
                 </h1>
 
@@ -245,34 +236,42 @@ export default function ParaderoList({
                             // Display nearby paraderos with location info
                             filteredNearbyParaderos.length > 0 ? (
                                 <ul className="divide-y divide-gray-200">
-                                    {filteredNearbyParaderos.map((paradero, index) => (
-                                        <li key={paradero.id}>
-                                            <button
-                                                onClick={() => onParaderoSelect(paradero)}
-                                                className="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-50"
+                                    <AnimatePresence>
+                                        {filteredNearbyParaderos.map((paradero, index) => (
+                                            <motion.li
+                                                key={paradero.id}
+                                                custom={index}
+                                                initial="hidden"
+                                                animate="visible"
+                                                variants={listItemVariants}
                                             >
-                                                <div className="flex justify-between items-center">
-                                                    <div>
-                                                        <div className="font-medium text-lg flex items-center">
-                                                            {paradero.cod}
-                                                            {index === 0 && (
-                                                                <span className="ml-2 text-yellow-600 opacity-75 text-sm flex items-center">
-                                                                    <span className="mr-1">✨</span>
-                                                                    <span className="text-xs">más cercano</span>
-                                                                </span>
-                                                            )}
+                                                <button
+                                                    onClick={() => onParaderoSelect(paradero)}
+                                                    className="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-50"
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <div className="font-medium text-lg flex items-center">
+                                                                {paradero.cod}
+                                                                {index === 0 && (
+                                                                    <span className="ml-2 text-yellow-600 opacity-75 text-sm flex items-center">
+                                                                        <span className="mr-1">✨</span>
+                                                                        <span className="text-xs">más cercano</span>
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                                                                {paradero.name}
+                                                            </div>
                                                         </div>
-                                                        <div className="text-sm text-gray-500 truncate max-w-[200px]">
-                                                            {paradero.name}
+                                                        <div className="text-base text-gray-500 text-xs font-mono font-bold">
+                                                            {formatDistance(paradero.distance)}
                                                         </div>
                                                     </div>
-                                                    <div className="text-base text-gray-500  text-xs font-mono font-bold">
-                                                        {formatDistance(paradero.distance)}
-                                                    </div>
-                                                </div>
-                                            </button>
-                                        </li>
-                                    ))}
+                                                </button>
+                                            </motion.li>
+                                        ))}
+                                    </AnimatePresence>
                                 </ul>
                             ) : (
                                 <div className="p-4 text-center text-gray-500 h-full flex items-center justify-center">
@@ -286,16 +285,24 @@ export default function ParaderoList({
                             // Manual paradero search
                             filteredParaderos.length > 0 ? (
                                 <ul className="divide-y divide-gray-200">
-                                    {filteredParaderos.slice(0, 100).map((paradero) => (
-                                        <li key={paradero}>
-                                            <button
-                                                onClick={() => onParaderoSelect(paradero)}
-                                                className="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-50"
+                                    <AnimatePresence>
+                                        {filteredParaderos.slice(0, 100).map((paradero, index) => (
+                                            <motion.li
+                                                key={paradero}
+                                                custom={index}
+                                                initial="hidden"
+                                                animate="visible"
+                                                variants={listItemVariants}
                                             >
-                                                <span className="font-medium text-lg">{paradero}</span>
-                                            </button>
-                                        </li>
-                                    ))}
+                                                <button
+                                                    onClick={() => onParaderoSelect(paradero)}
+                                                    className="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-50"
+                                                >
+                                                    <span className="font-medium text-lg">{paradero}</span>
+                                                </button>
+                                            </motion.li>
+                                        ))}
+                                    </AnimatePresence>
                                 </ul>
                             ) : search ? (
                                 <div className="p-4 text-center text-gray-500 h-full flex items-center justify-center">
@@ -325,6 +332,6 @@ export default function ParaderoList({
                     Volver
                 </button>
             </div>
-        </motion.div>
+        </div>
     );
 } 
