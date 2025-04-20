@@ -6,6 +6,8 @@ import ConfirmarParadero from "@/components/confirmar-paradero"
 import SeleccionarDestino from "@/components/seleccionar-destino"
 import ActivarAlertas from "@/components/activar-alertas"
 import { AnimatePresence, motion } from "framer-motion"
+import { useViewportMeta } from "@/hooks/useViewportMeta"
+import { useGeolocationPermissionCheck } from "@/hooks/useGeolocationPermissionCheck"
 
 export default function Home() {
   const [step, setStep] = useState(1)
@@ -14,17 +16,16 @@ export default function Home() {
   const [destination, setDestination] = useState("")
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  // Asegurar que la aplicación respete el safe area en iOS
-  // useEffect(() => {
-  //   // Agregar meta viewport para iOS
-  //   const meta = document.createElement("meta")
-  //   meta.name = "viewport"
-  //   meta.content = "width=device-width, initial-scale=1, viewport-fit=cover"
-  //   document.getElementsByTagName("head")[0].appendChild(meta)
-  // 
-  //   // Agregar clase para manejar el safe area
-  //   document.body.classList.add("pb-safe")
-  // }, []) // Removed useEffect for body class
+  useViewportMeta()
+  const { permission: initialPermission, position: initialPosition } = useGeolocationPermissionCheck()
+
+  useEffect(() => {
+    if (initialPermission === 'granted' && initialPosition) {
+      if (step === 1) {
+        handleLocationPermission(initialPosition)
+      }
+    }
+  }, [initialPermission, initialPosition, step])
 
   const handleLocationPermission = (position: GeolocationPosition | null) => {
     setIsTransitioning(true)
@@ -54,12 +55,10 @@ export default function Home() {
   }
 
   const handleComplete = () => {
-    // Aquí iría la lógica para guardar las preferencias del usuario
     console.log("Configuración completada:", {
       paradero: selectedParadero,
       destino: destination,
     })
-    // Reiniciar el flujo o redirigir a la pantalla principal
     setIsTransitioning(true)
     setTimeout(() => {
       setStep(1)
