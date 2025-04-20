@@ -230,10 +230,10 @@ export default function MapaParaderos({
             latitude={selectedParadero.pos[0]}
           >
             <div 
-              className="flex items-center justify-center w-14 h-14"
-              style={{ fontSize: '2.5rem', filter: 'none' }}
+              className="flex items-center justify-center w-18 h-18 animate-marker-bounce"
+              style={{ fontSize: '4rem', filter: 'none' }}
             >
-              🚌
+              🚏
             </div>
           </Marker>
         )}

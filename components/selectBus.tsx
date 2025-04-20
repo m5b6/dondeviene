@@ -265,7 +265,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
             <ReloadIndicator onReload={fetchBusData} reloadInterval={5000} />
           </div>
 
-          <motion.div className="mb-6" variants={itemVariants}>
+          <motion.div className="mb-6 h-[90px]" variants={itemVariants}>
             <h2 className="text-2xl font-bold mb-1 text-center tracking-tight">
               <span className="mr-2 text-2xl">🚏</span> {busStopInfo?.name || "Cargando paradero..."}
             </h2>
@@ -281,7 +281,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="relative h-[400px] overflow-y-auto pr-1"
+              className="relative h-[320px] overflow-y-auto px-1 mb-3 pb-1"
             >
               {isLoading && microRoutes.length === 0 ? (
                 <div className="flex justify-center items-center h-full">

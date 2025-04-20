@@ -82,6 +82,13 @@ const config: Config = {
       animation: {
         "fade-in": "fadeIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
         "slide-up": "slideUp 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
+        "marker-bounce": "markerBounce 2s ease-in-out infinite",
+      },
+      keyframes: {
+        markerBounce: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-4px)" },
+        },
       },
       spacing: {
         "safe-bottom": "var(--safe-bottom)",
