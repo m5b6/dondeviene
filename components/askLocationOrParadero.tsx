@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import AskLocation from "./askLocation"
 import AskParadero from "./askParadero"
+import CardLayout from "./cardLayout"
 
 export type LocationResult = 
   | { type: "location"; position: GeolocationPosition }
@@ -15,22 +16,70 @@ interface AskLocationOrParaderoProps {
   forceAllowNextStep?: boolean;
 }
 
+// Animation variants for page transitions
+const pageVariants = {
+  locationEnter: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      x: { type: "spring", stiffness: 300, damping: 30 },
+      opacity: { duration: 0.3 }
+    }
+  },
+  locationExit: {
+    x: -30,
+    opacity: 0,
+    transition: {
+      x: { duration: 0.25 },
+      opacity: { duration: 0.25 }
+    }
+  },
+  paraderoEnter: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      x: { type: "spring", stiffness: 300, damping: 30 },
+      opacity: { duration: 0.3 }
+    }
+  },
+  paraderoExit: {
+    x: 30,
+    opacity: 0,
+    transition: {
+      x: { duration: 0.25 },
+      opacity: { duration: 0.25 }
+    }
+  }
+};
+
 export default function AskLocationOrParadero({
   onResult,
   forceAllowNextStep = false
 }: AskLocationOrParaderoProps) {
   const [view, setView] = useState<"location" | "paradero">("location");
+  const [userPosition, setUserPosition] = useState<GeolocationPosition | null>(null);
+  const [forceManualMode, setForceManualMode] = useState(false);
 
   const handleLocationPermission = (position: GeolocationPosition | null) => {
     if (position) {
-      onResult({ type: "location", position });
+      // Save the position for use in Paradero selection
+      setUserPosition(position);
+      // Ensure we're not in manual mode when location is available
+      setForceManualMode(false);
+      // Go to paradero selection view
+      setView("paradero");
     } else {
       setView("paradero");
     }
   };
 
   const handleParaderoSelected = (paradero: string) => {
-    onResult({ type: "paradero", paradero });
+    // If we have user location, include it in the result
+    if (userPosition) {
+      onResult({ type: "location", position: userPosition });
+    } else {
+      onResult({ type: "paradero", paradero });
+    }
   };
 
   const handleBack = () => {
@@ -41,24 +90,50 @@ export default function AskLocationOrParadero({
     onResult({ type: "none" });
   };
 
+  const handleProceedWithoutLocation = () => {
+    // Set manual mode flag and go to paradero selection
+    setForceManualMode(true);
+    setView("paradero");
+  };
+
   return (
-    <div className="relative">
-      <AnimatePresence mode="wait" initial={false}>
-        {view === "location" ? (
-          <AskLocation 
-            key="location"
-            onPermission={handleLocationPermission}
-            onProceedWithoutLocation={() => setView("paradero")}
-            forceAllowNextStep={forceAllowNextStep}
-          />
-        ) : (
-          <AskParadero 
-            key="paradero"
-            onParaderoSelected={handleParaderoSelected}
-            onBack={handleBack}
-          />
-        )}
-      </AnimatePresence>
-    </div>
+    <CardLayout>
+      <div className="relative h-[465px]">
+        <AnimatePresence mode="wait" initial={false}>
+          {view === "location" ? (
+            <motion.div 
+              key="location"
+              initial={{ x: -30, opacity: 0 }}
+              animate="locationEnter"
+              exit="locationExit"
+              variants={pageVariants}
+              className="absolute inset-0"
+            >
+              <AskLocation 
+                onPermission={handleLocationPermission}
+                onProceedWithoutLocation={handleProceedWithoutLocation}
+                forceAllowNextStep={forceAllowNextStep}
+              />
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="paradero"
+              initial={{ x: 30, opacity: 0 }}
+              animate="paraderoEnter"
+              exit="paraderoExit"
+              variants={pageVariants}
+              className="absolute inset-0"
+            >
+              <AskParadero 
+                onParaderoSelected={handleParaderoSelected}
+                onBack={handleBack}
+                userLocation={userPosition}
+                forceManualMode={forceManualMode}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </CardLayout>
   );
 } 

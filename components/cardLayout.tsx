@@ -70,7 +70,7 @@ export default function CardLayout({ children }: CardLayoutProps) {
       </motion.div>
 
       {/* Modal - No exit animation on the container */}
-      <div className="absolute inset-0 flex items-center justify-center p-6 pt-safe pb-safe">
+      <div className="absolute inset-0 flex items-center justify-center p-3 pt-safe pb-safe">
         <div className="w-full max-w-md vision-card p-8">
           {children}
         </div>
