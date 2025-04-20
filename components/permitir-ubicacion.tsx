@@ -5,13 +5,42 @@ import MapPlaceholder from "./map-placeholder"
 import { motion } from "framer-motion"
 
 interface PermitirUbicacionProps {
-  onPermission: (position: GeolocationPosition | null) => void
+  onPermission: (position: GeolocationPosition | null) => void;
+  onRetry?: () => void;
+  onProceedWithoutLocation?: () => void;
+  error?: GeolocationPositionError | Error | null;
+  forceAllowNextStep?: boolean;
+  permission?: "granted" | "denied" | "prompting" | "unsupported" | "idle";
 }
 
-export default function PermitirUbicacion({ onPermission }: PermitirUbicacionProps) {
+export default function PermitirUbicacion({ 
+  onPermission, 
+  onRetry, 
+  onProceedWithoutLocation, 
+  error: externalError, 
+  forceAllowNextStep = false,
+  permission: externalPermission
+}: PermitirUbicacionProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [hasVibrated, setHasVibrated] = useState(false)
   const [permissionError, setPermissionError] = useState<string | null>(null)
+
+  // Handle external error coming from useGeolocation hook
+  useEffect(() => {
+    if (externalError) {
+      if ('code' in externalError) {
+        if (externalError.code === 1) { // PERMISSION_DENIED
+          setPermissionError("Permiso denegado. Por favor activa la ubicación en tu navegador.")
+        } else if (externalError.code === 2) { // POSITION_UNAVAILABLE
+          setPermissionError("No se pudo obtener tu ubicación. Intenta de nuevo.")
+        } else if (externalError.code === 3) { // TIMEOUT
+          setPermissionError("La búsqueda de ubicación tomó demasiado tiempo. Intenta de nuevo.")
+        }
+      } else {
+        setPermissionError("Error al obtener tu ubicación. Intenta de nuevo.")
+      }
+    }
+  }, [externalError])
 
   useEffect(() => {
     if (!hasVibrated && "vibrate" in navigator) {
@@ -29,6 +58,13 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
   const handlePermitir = () => {
     setIsLoading(true)
     setPermissionError(null)
+
+    // If we have an onRetry function from the parent, use that
+    if (onRetry) {
+      onRetry();
+      setIsLoading(false);
+      return;
+    }
 
     // Vibración táctil - with error handling
     if ("vibrate" in navigator) {
@@ -87,7 +123,12 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
         // Ignore vibration errors
       }
     }
-    onPermission(null)
+    // Use the dedicated function if available
+    if (onProceedWithoutLocation) {
+      onProceedWithoutLocation();
+    } else {
+      onPermission(null);
+    }
   }
 
   // Efecto de parallax para el fondo
@@ -181,6 +222,11 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
                 transition={{ duration: 0.3 }}
               >
                 {permissionError}
+                {forceAllowNextStep && (
+                  <span className="block mt-2">
+                    Puedes continuar sin ubicación para seleccionar tu paradero manualmente.
+                  </span>
+                )}
               </motion.div>
             )}
 
@@ -214,7 +260,7 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
                   Cargando...
                 </span>
               ) : (
-                "Permitir"
+                externalError ? "Reintentar" : "Permitir"
               )}
             </button>
 

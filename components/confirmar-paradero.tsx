@@ -101,7 +101,7 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
       </button>
 
       {/* Map Container - Use the dynamically imported component */}
-      <div className="flex-1 grayscale relative">
+      <div className="flex-1 relative">
         <MapaParaderos
             userLocation={userCoords}
             selectedParadero={selectedParadero}

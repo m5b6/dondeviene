@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from 'react';
-import Map, { Marker } from 'react-map-gl/mapbox';
+import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox';
+import type { LayerProps } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { ParaderoInfo } from "../lib/fetch-paraderos";
 import { useEffect } from 'react';
@@ -46,6 +47,35 @@ export default function MapaParaderos({
     }
   }, [selectedParadero?.pos[0], selectedParadero?.pos[1], userLocation?.latitude, userLocation?.longitude]);
   
+  // Create GeoJSON for the route line
+  const routeData = React.useMemo(() => {
+    if (!userLocation || !selectedParadero) return null;
+    
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [userLocation.longitude, userLocation.latitude],
+          [selectedParadero.pos[1], selectedParadero.pos[0]]
+        ]
+      }
+    };
+  }, [userLocation, selectedParadero]);
+
+  // Line style
+  const lineLayer: LayerProps = {
+    id: 'route',
+    type: 'line',
+    paint: {
+      'line-color': '#3b82f6',
+      'line-width': 4,
+      'line-opacity': 0.8,
+      'line-dasharray': [0.5, 1.5]
+    }
+  };
+  
   return (
     <div className="h-full w-full relative">
       <Map
@@ -57,14 +87,23 @@ export default function MapaParaderos({
           zoom: userLocation ? 15 : 12
         }}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="mapbox://styles/mapbox/navigation-day-v1"
+        mapStyle="mapbox://styles/mapbox/dark-v11"
       >
+        {/* Route line between user and paradero */}
+        {routeData && (
+          <Source id="route" type="geojson" data={routeData as any}>
+            <Layer {...lineLayer} />
+          </Source>
+        )}
+
         {userLocation && (
           <Marker
             longitude={userLocation.longitude}
             latitude={userLocation.latitude}
           >
-            <div className="w-8 h-8 bg-blue-600 rounded-full border-4 border-white shadow-lg pulse-animation" />
+            <div 
+              className="w-8 h-8 bg-blue-600 rounded-full border-4 border-white shadow-lg pulse-animation" 
+            />
           </Marker>
         )}
 
@@ -73,7 +112,12 @@ export default function MapaParaderos({
             longitude={selectedParadero.pos[1]}
             latitude={selectedParadero.pos[0]}
           >
-            <div className="w-12 h-12 text-5xl drop-shadow-lg">🚌</div>
+            <div 
+              className="flex items-center justify-center w-14 h-14"
+              style={{ fontSize: '2.5rem', filter: 'none' }}
+            >
+              🚌
+            </div>
           </Marker>
         )}
       </Map>

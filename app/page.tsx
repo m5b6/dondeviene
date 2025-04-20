@@ -23,9 +23,11 @@ export default function Home() {
   const [selectedParadero, setSelectedParadero] = useState<SelectedParaderoInfo | null>(null)
   const [destination, setDestination] = useState("")
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [locationAttempts, setLocationAttempts] = useState(0)
+  const [forceAllowNextStep, setForceAllowNextStep] = useState(false)
 
-  // Use the new geolocation hook with refined options
-  const { permission, position, error } = useGeolocation({
+  // Use the geolocation hook with refined options
+  const { permission, position, error, requestPermission } = useGeolocation({
     enableHighAccuracy: true,
     timeout: 7000,
     maximumAge: 10000, // Accept positions up to 10 seconds old
@@ -33,15 +35,43 @@ export default function Home() {
 
   // Auto-proceed to next step if we get permission and position
   useEffect(() => {
-    // Only proceed automatically if we're on step 1 and have a position
+    // If we have a position, proceed automatically
     if (permission === 'granted' && position && step === 1) {
       handleLocationPermission(position)
     }
-  }, [permission, position, step])
+    // If we've failed to get location despite attempts, set force allow flag
+    else if ((permission === 'denied' || (error && locationAttempts >= 2)) && step === 1) {
+      setForceAllowNextStep(true)
+    }
+  }, [permission, position, error, step, locationAttempts])
+
+  // Try to request permission immediately
+  useEffect(() => {
+    if (step === 1 && locationAttempts === 0) {
+      requestPermission()
+      setLocationAttempts(1)
+    }
+  }, [step, locationAttempts, requestPermission])
+
+  // Handle retrying for location
+  const handleRetryLocation = () => {
+    setLocationAttempts(prev => prev + 1)
+    requestPermission()
+  }
 
   const handleLocationPermission = (position: GeolocationPosition | null) => {
     setIsTransitioning(true)
     setLocation(position)
+    setTimeout(() => {
+      setStep(2)
+      setIsTransitioning(false)
+    }, 300)
+  }
+
+  // Function to proceed without location
+  const handleProceedWithoutLocation = () => {
+    setIsTransitioning(true)
+    setLocation(null)
     setTimeout(() => {
       setStep(2)
       setIsTransitioning(false)
@@ -75,6 +105,8 @@ export default function Home() {
     setIsTransitioning(true)
     setTimeout(() => {
       setStep(1)
+      setLocationAttempts(0)
+      setForceAllowNextStep(false)
       setIsTransitioning(false)
     }, 300)
   }
@@ -112,7 +144,14 @@ export default function Home() {
             transition={{ duration: 0.3 }}
             className="h-screen"
           >
-            <PermitirUbicacion onPermission={handleLocationPermission} />
+            <PermitirUbicacion 
+              onPermission={handleLocationPermission} 
+              onRetry={handleRetryLocation}
+              onProceedWithoutLocation={handleProceedWithoutLocation}
+              error={error}
+              forceAllowNextStep={forceAllowNextStep}
+              permission={permission}
+            />
           </motion.div>
         )}
 
