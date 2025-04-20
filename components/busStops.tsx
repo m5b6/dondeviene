@@ -6,6 +6,7 @@ import axios from "axios"
 import { RedParadero } from "../types/red"
 import dynamic from 'next/dynamic'
 import { fetchNearbyParaderos, ParaderoInfo } from "../lib/fetch-paraderos"
+import BackButton from "./BackButton"
 
 const MapaParaderos = dynamic(() => import('./map'), {
   ssr: false,
@@ -66,7 +67,6 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
       }
     };
 
-    // Only fetch nearby paraderos if there's no manual code
     if (!manualParaderoCode) {
       getParaderos();
     }
@@ -139,15 +139,7 @@ export default function ConfirmarParadero({ location, manualParaderoCode, onConf
 
   return (
     <div className="h-screen w-full flex flex-col relative">
-      <button
-        onClick={onBack}
-        className="absolute top-safe-area-top left-4 z-20 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors flex items-center justify-center w-10 h-10"
-        aria-label="Volver"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-black">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-        </svg>
-      </button>
+      <BackButton onClick={onBack} />
 
       <div className="flex-1 relative">
         <MapaParaderos

@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import MapPlaceholder from "./mapLoading"
 import ReloadIndicator from "./ReloadIndicator"
+import BackButton from "./BackButton"
 
 // Define animation variants
 const cardVariants = {
@@ -223,13 +224,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
   return (
     <div className="h-screen w-full flex flex-col relative" ref={containerRef}>
       {/* Botón de Volver */}
-      <button
-        onClick={onBack}
-        className="absolute top-4 left-4 z-20 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors flex items-center justify-center w-10 h-10"
-        aria-label="Volver"
-      >
-        <span className="text-black text-xl font-bold">&lt;</span>
-      </button>
+      <BackButton onClick={onBack} />
 
       {/* Fondo con mapa borroso y efecto parallax */}
       <motion.div
@@ -328,7 +323,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
                       >
                         <div className="flex-1">
                           <div className="flex items-center">
-                            <span className="text-xl mr-2">🚌</span>
+                            <span className={`text-xl mr-2 ${micro.valid ? "animate-bus-rumble" : "grayscale opacity-60"}`}>🚌</span>
                             <span className={`font-semibold text-lg ${isSelected ? "text-white" : ""}`}>
                               {micro.name}
                             </span>

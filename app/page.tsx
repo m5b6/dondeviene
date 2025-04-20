@@ -6,6 +6,7 @@ import ConfirmarParadero from "@/components/busStops"
 import SeleccionarDestino from "@/components/selectBus"
 import ActivarAlertas from "@/components/activar-alertas"
 import { AnimatePresence, motion } from "framer-motion"
+import Logo from "@/components/Logo"
 
 interface SelectedParaderoInfo {
   id: number;
@@ -99,6 +100,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-off-white text-black pb-[env(safe-area-inset-bottom)]">
+      {/* Logo component */}
+      <Logo step={step} />
+      
       {isTransitioning && (
         <motion.div
           key="transition"

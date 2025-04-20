@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import MapPlaceholder from "./mapLoading"
 import { motion } from "framer-motion"
+import BackButton from "./BackButton"
 
 interface ActivarAlertasProps {
   paradero: string
@@ -61,13 +62,7 @@ export default function ActivarAlertas({ paradero, destino, onComplete, onBack }
   return (
     <div className="relative h-screen w-full overflow-hidden">
       {/* Botón de Volver */}
-      <button
-        onClick={onBack}
-        className="absolute top-4 left-4 z-20 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors flex items-center justify-center w-10 h-10"
-        aria-label="Volver"
-      >
-        <span className="text-black text-xl font-bold">&lt;</span>
-      </button>
+      <BackButton onClick={onBack} />
 
       {/* Fondo con mapa borroso y efecto parallax */}
       <motion.div

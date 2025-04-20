@@ -83,11 +83,21 @@ const config: Config = {
         "fade-in": "fadeIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
         "slide-up": "slideUp 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
         "marker-bounce": "markerBounce 2s ease-in-out infinite",
+        "bus-rumble": "busRumble 0.5s ease-in-out infinite",
       },
       keyframes: {
         markerBounce: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-4px)" },
+        },
+        busRumble: {
+          "0%": { transform: "rotate(0deg) translateX(0) scale(1)" },
+          "15%": { transform: "rotate(-0.3deg) translateX(-0.5px) scale(0.995)" },
+          "30%": { transform: "rotate(0deg) translateX(0) scale(1.005)" },
+          "45%": { transform: "rotate(0.3deg) translateX(0.5px) scale(0.995)" },
+          "60%": { transform: "rotate(0deg) translateY(-0.25px) scale(1)" },
+          "75%": { transform: "rotate(-0.2deg) translateY(0.25px) scale(1.005)" },
+          "100%": { transform: "rotate(0deg) translateX(0) scale(1)" },
         },
       },
       spacing: {
