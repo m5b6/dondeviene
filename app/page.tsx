@@ -8,10 +8,20 @@ import ActivarAlertas from "@/components/activar-alertas"
 import { AnimatePresence, motion } from "framer-motion"
 import { useGeolocationPermissionCheck } from "@/hooks/useGeolocationPermissionCheck"
 
+// Define the type for selected paradero info, matching ConfirmarParadero's output
+interface SelectedParaderoInfo {
+  id: number;
+  cod: string;
+  name: string;
+  distance: number;
+  pos: [number, number];
+}
+
 export default function Home() {
   const [step, setStep] = useState(1)
   const [location, setLocation] = useState<GeolocationPosition | null>(null)
-  const [selectedParadero, setSelectedParadero] = useState<{ id: string; distance: number } | null>(null)
+  // Update state to use the new type
+  const [selectedParadero, setSelectedParadero] = useState<SelectedParaderoInfo | null>(null)
   const [destination, setDestination] = useState("")
   const [isTransitioning, setIsTransitioning] = useState(false)
 
@@ -23,6 +33,7 @@ export default function Home() {
         handleLocationPermission(initialPosition)
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPermission, initialPosition, step])
 
   const handleLocationPermission = (position: GeolocationPosition | null) => {
@@ -34,7 +45,8 @@ export default function Home() {
     }, 300)
   }
 
-  const handleParaderoConfirm = (paradero: { id: string; distance: number }) => {
+  // Update handler function to expect the new type
+  const handleParaderoConfirm = (paradero: SelectedParaderoInfo) => {
     setIsTransitioning(true)
     setSelectedParadero(paradero)
     setTimeout(() => {
@@ -54,7 +66,7 @@ export default function Home() {
 
   const handleComplete = () => {
     console.log("Configuración completada:", {
-      paradero: selectedParadero,
+      paradero: selectedParadero, // Log the full object
       destino: destination,
     })
     setIsTransitioning(true)
@@ -112,7 +124,7 @@ export default function Home() {
           >
             <ConfirmarParadero
               location={location}
-              onConfirm={handleParaderoConfirm}
+              onConfirm={handleParaderoConfirm} // Now matches the expected type
               onBack={handleBack}
             />
           </motion.div>
@@ -141,7 +153,8 @@ export default function Home() {
             className="h-screen"
           >
             <ActivarAlertas
-              paradero={selectedParadero?.id || ""}
+              // Convert id to string if ActivarAlertas expects string
+              paradero={selectedParadero ? selectedParadero.cod : ""} // Pass cod instead, which is string
               destino={destination}
               onComplete={handleComplete}
               onBack={handleBack}

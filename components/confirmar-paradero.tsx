@@ -1,88 +1,115 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import MapPlaceholder from "./map-placeholder"
 import { motion, AnimatePresence } from "framer-motion"
+import axios from "axios"
+import { RedParadero } from "../types/red"
+import dynamic from 'next/dynamic'
+import { fetchNearbyParaderos, ParaderoInfo } from "../lib/fetch-paraderos"
 
-interface ParaderoInfo {
-  id: string
-  distance: number
-}
+const MapaParaderos = dynamic(() => import('./mapa-paraderos'), {
+    ssr: false,
+    loading: () => <div className="h-full w-full flex items-center justify-center bg-gray-200">Cargando mapa...</div>
+});
 
 interface ConfirmarParaderoProps {
-  location: GeolocationPosition | null
-  onConfirm: (paradero: ParaderoInfo) => void
-  onBack: () => void
+  location: GeolocationPosition | null;
+  onConfirm: (paradero: ParaderoInfo) => void;
+  onBack: () => void;
 }
 
 export default function ConfirmarParadero({ location, onConfirm, onBack }: ConfirmarParaderoProps) {
-  // Simulación de paraderos cercanos
-  const [paraderos, setParaderos] = useState<ParaderoInfo[]>([])
-  const [selectedParadero, setSelectedParadero] = useState<ParaderoInfo | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [paraderos, setParaderos] = useState<ParaderoInfo[]>([]);
+  const [selectedParadero, setSelectedParadero] = useState<ParaderoInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const userCoords = location ? { latitude: location.coords.latitude, longitude: location.coords.longitude } : null;
 
   useEffect(() => {
-    // Simulamos una carga de datos
-    setIsLoading(true)
+    if (!location) {
+      setError("No se pudo obtener la ubicación.");
+      setIsLoading(false);
+      return;
+    }
 
-    // Aquí se conectaría con una API real para obtener paraderos cercanos
-    // basados en la ubicación del usuario
-    setTimeout(() => {
-      const mockParaderos = [
-        { id: "1234", distance: 200 },
-        { id: "5678", distance: 350 },
-        { id: "9012", distance: 480 },
-        { id: "A3B4", distance: 600 },
-        { id: "C5D6", distance: 750 },
-        { id: "E7F8", distance: 900 },
-        { id: "G9H0", distance: 1100 },
-      ]
-      setParaderos(mockParaderos)
-      setSelectedParadero(mockParaderos[0])
-      setIsLoading(false)
+    const getParaderos = async () => {
+      setIsLoading(true);
+      setError(null);
+      const { latitude, longitude } = location.coords;
+      
+      try {
+        const nearbyParaderos = await fetchNearbyParaderos(latitude, longitude);
 
-      // Vibración táctil al cargar los datos
-      if ("vibrate" in navigator) {
-        navigator.vibrate(10)
+        if (nearbyParaderos.length > 0) {
+          setParaderos(nearbyParaderos);
+          setSelectedParadero(nearbyParaderos[0]);
+
+          if ("vibrate" in navigator) {
+            navigator.vibrate(10);
+          }
+        } else {
+           setError("No se encontraron paraderos cercanos.");
+           setParaderos([]);
+           setSelectedParadero(null);
+        }
+      } catch (err: any) {
+        setError(err.message || "Error al buscar paraderos. Intenta de nuevo.");
+        setParaderos([]);
+        setSelectedParadero(null);
+      } finally {
+        setIsLoading(false);
       }
-    }, 1000)
-  }, [location])
+    };
+
+    getParaderos();
+  }, [location]);
 
   const handleConfirm = () => {
     if (selectedParadero) {
-      // Vibración táctil
       if ("vibrate" in navigator) {
-        navigator.vibrate(15)
+        navigator.vibrate(15);
       }
-      onConfirm(selectedParadero)
+      onConfirm(selectedParadero);
     }
-  }
+  };
 
   const handleSelectParadero = (paradero: ParaderoInfo) => {
-    // Vibración táctil
     if ("vibrate" in navigator) {
-      navigator.vibrate(5)
+      navigator.vibrate(5);
     }
-    setSelectedParadero(paradero)
+    setSelectedParadero(paradero);
+  };
+
+  const formatDistance = (meters: number): string => {
+      if (meters < 1000) {
+          return `${meters} m`;
+      }
+      return `${(meters / 1000).toFixed(1)} km`;
   }
 
   return (
     <div className="h-screen w-full flex flex-col relative">
-      {/* Botón de Volver */}
       <button
         onClick={onBack}
-        className="absolute top-4 left-4 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors flex items-center justify-center w-10 h-10"
+        className="absolute top-safe-area-top left-4 z-20 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors flex items-center justify-center w-10 h-10"
         aria-label="Volver"
       >
-        <span className="text-black text-xl font-bold">&lt;</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-black">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+        </svg>
       </button>
 
-      {/* Mapa en escala de grises */}
-      <div className="flex-1 grayscale">
-        <MapPlaceholder />
+      {/* Map Container - Use the dynamically imported component */}
+      <div className="flex-1 grayscale relative">
+        <MapaParaderos
+            userLocation={userCoords}
+            selectedParadero={selectedParadero}
+            isLoading={isLoading && paraderos.length === 0} // Show map loading indicator only initially
+        />
       </div>
 
-      {/* Tarjeta superpuesta */}
+      {/* Bottom Card */}
       <motion.div
         className="bg-white/90 backdrop-blur-xl w-full rounded-t-3xl shadow-vision p-6 pb-safe"
         initial={{ y: 100 }}
@@ -90,15 +117,16 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         style={{
           borderTop: "1px solid rgba(255, 255, 255, 0.5)",
+          position: "relative", zIndex: 10
         }}
       >
         <h2 className="text-2xl font-bold mb-6 tracking-tight flex items-center">
           <span className="mr-2 text-2xl">🚏</span> ¿Este es tu paradero?
         </h2>
 
-        {/* Container for list/loader with fixed height and scroll */}
+        {/* List Container */}
         <div className="h-[180px] sm:h-[250px] overflow-y-auto pr-1">
-          {isLoading ? (
+          {isLoading && paraderos.length === 0 ? ( // Show spinner only on initial load
             <div className="flex justify-center items-center h-full py-8">
               <svg
                 className="animate-spin h-8 w-8 text-black"
@@ -114,6 +142,14 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
                 ></path>
               </svg>
             </div>
+          ) : error ? (
+            <div className="flex justify-center items-center h-full text-center text-red-600 px-4">
+                {error}
+            </div>
+           ) : paraderos.length === 0 && !isLoading ? ( // Show message only after loading finished
+              <div className="flex justify-center items-center h-full text-center text-gray-500 px-4">
+                  No se encontraron paraderos cercanos.
+              </div>
           ) : (
             <ul className="space-y-3">
               <AnimatePresence>
@@ -122,16 +158,22 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
                     key={paradero.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
+                    transition={{ delay: index * 0.05 }}
                     onClick={() => handleSelectParadero(paradero)}
                     className={`apple-list-item ${
                       selectedParadero?.id === paradero.id ? "bg-black text-white" : "hover:bg-gray-100"
                     }`}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <div className="text-lg font-medium tracking-tight flex items-center">
-                      <span className="mr-2 text-xl">🚌</span>
-                      {paradero.id} — {paradero.distance} m
+                    <div className="text-lg font-medium tracking-tight flex items-center justify-between">
+                      <span className="flex items-center truncate pr-2">
+                        <span className="mr-2 text-xl">🚌</span>
+                        <span className="font-semibold mr-2">{paradero.cod}</span>
+                        <span className={`truncate ${selectedParadero?.id === paradero.id ? 'text-gray-400' : 'text-gray-600'}`}>{paradero.name}</span>
+                      </span>
+                      <span className={`font-normal text-sm whitespace-nowrap pl-2 ${selectedParadero?.id === paradero.id ? 'text-gray-300' : 'text-gray-500'}`}>
+                          {formatDistance(paradero.distance)}
+                      </span>
                     </div>
                   </motion.li>
                 ))}
@@ -140,19 +182,20 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
           )}
         </div>
 
+        {/* Confirm Button */}
         <motion.button
           onClick={handleConfirm}
-          disabled={!selectedParadero || isLoading}
+          disabled={!selectedParadero || isLoading || !!error}
           className={`apple-button w-full py-4 mt-6 font-medium text-lg transition-all border-1 ${
-            !selectedParadero || isLoading
+            !selectedParadero || isLoading || !!error
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
               : "bg-black text-white hover:bg-white hover:text-black hover:border-black hover:shadow-lg"
           }`}
-          whileTap={{ scale: !selectedParadero || isLoading ? 1 : 0.98 }}
+          whileTap={{ scale: !selectedParadero || isLoading || !!error ? 1 : 0.98 }}
         >
           Sí, es este
         </motion.button>
       </motion.div>
     </div>
-  )
+  );
 }
