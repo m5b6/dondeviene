@@ -97,9 +97,9 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
         </h2>
 
         {/* Container for list/loader with fixed height and scroll */}
-        <div className="h-[250px] overflow-y-auto pr-1">
+        <div className="h-[180px] sm:h-[250px] overflow-y-auto pr-1">
           {isLoading ? (
-            <div className="flex justify-center items-center py-8">
+            <div className="flex justify-center items-center h-full py-8">
               <svg
                 className="animate-spin h-8 w-8 text-black"
                 xmlns="http://www.w3.org/2000/svg"

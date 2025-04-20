@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body {
+  height: 100%; /* Prevent pull-to-refresh issues */
+  overflow: hidden; /* Prevent body scroll on mobile */
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 245, 245, 247;
@@ -23,6 +29,7 @@ body {
   line-height: 1.5;
   letter-spacing: -0.01em;
   overflow-x: hidden;
+  @apply text-xs sm:text-base; /* Responsive base font size (xs default) */
 }
 
 h1,
@@ -71,9 +78,9 @@ button {
 
 /* Apple-style button */
 .apple-button {
-  @apply rounded-2xl font-medium transition-all duration-300;
+  @apply rounded-2xl font-medium transition-all duration-300 py-4; /* Use standard padding */
   letter-spacing: -0.01em;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  /* padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); */ /* Removed safe area calc */
 }
 
 .apple-button:active {

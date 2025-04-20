@@ -15,16 +15,16 @@ export default function Home() {
   const [isTransitioning, setIsTransitioning] = useState(false)
 
   // Asegurar que la aplicación respete el safe area en iOS
-  useEffect(() => {
-    // Agregar meta viewport para iOS
-    const meta = document.createElement("meta")
-    meta.name = "viewport"
-    meta.content = "width=device-width, initial-scale=1, viewport-fit=cover"
-    document.getElementsByTagName("head")[0].appendChild(meta)
-
-    // Agregar clase para manejar el safe area
-    document.body.classList.add("pb-safe")
-  }, [])
+  // useEffect(() => {
+  //   // Agregar meta viewport para iOS
+  //   const meta = document.createElement("meta")
+  //   meta.name = "viewport"
+  //   meta.content = "width=device-width, initial-scale=1, viewport-fit=cover"
+  //   document.getElementsByTagName("head")[0].appendChild(meta)
+  // 
+  //   // Agregar clase para manejar el safe area
+  //   document.body.classList.add("pb-safe")
+  // }, []) // Removed useEffect for body class
 
   const handleLocationPermission = (position: GeolocationPosition | null) => {
     setIsTransitioning(true)
@@ -78,7 +78,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-off-white text-black">
+    <main className="min-h-screen bg-off-white text-black pb-safe">
       <AnimatePresence mode="wait">
         {isTransitioning ? (
           <motion.div
