@@ -4,6 +4,7 @@ import * as React from 'react';
 import Map, { Marker } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { ParaderoInfo } from "../lib/fetch-paraderos";
+import { useEffect } from 'react';
 
 interface MapaParaderosProps {
   userLocation: { latitude: number; longitude: number } | null;
@@ -18,9 +19,37 @@ export default function MapaParaderos({
   selectedParadero,
   isLoading = false
 }: MapaParaderosProps) {
+  const mapRef = React.useRef<any>(null);
+
+  // Fit bounds when paradero is selected
+  useEffect(() => {
+    // Only run when we have both locations and map is ready
+    if (!mapRef.current || !userLocation || !selectedParadero) {
+      return;
+    }
+    
+    try {
+      const bounds = [
+        [Math.min(userLocation.longitude, selectedParadero.pos[1]), Math.min(userLocation.latitude, selectedParadero.pos[0])],
+        [Math.max(userLocation.longitude, selectedParadero.pos[1]), Math.max(userLocation.latitude, selectedParadero.pos[0])]
+      ];
+      
+      // Add padding to ensure both points are clearly visible
+      mapRef.current.fitBounds(bounds, {
+        padding: { top: 80, bottom: 80, left: 80, right: 80 },
+        duration: 1000
+      });
+    } catch (err) {
+      // Silently handle map errors without console spam
+      // Only log in development if needed
+      // console.error("Error adjusting map view:", err);
+    }
+  }, [selectedParadero?.pos[0], selectedParadero?.pos[1], userLocation?.latitude, userLocation?.longitude]);
+  
   return (
     <div className="h-full w-full relative">
       <Map
+        ref={mapRef}
         mapboxAccessToken={PUBLIC_MAPBOX_TOKEN}
         initialViewState={{
           longitude: userLocation?.longitude || -70.67,

@@ -88,18 +88,18 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-off-white text-black pb-[env(safe-area-inset-bottom)]">
-      <AnimatePresence mode="wait">
-        {isTransitioning ? (
-          <motion.div
-            key="transition"
-            className="fixed inset-0 bg-black z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.2 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-        ) : null}
+      {isTransitioning && (
+        <motion.div
+          key="transition"
+          className="fixed inset-0 bg-black z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.2 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        />
+      )}
 
+      <AnimatePresence mode="popLayout">
         {step === 1 && (
           <motion.div
             key="step1"

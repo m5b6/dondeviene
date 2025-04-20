@@ -12,20 +12,32 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
   const [isLoading, setIsLoading] = useState(false)
   const [hasVibrated, setHasVibrated] = useState(false)
 
-  // Efecto para vibración al cargar
+  // Efecto para vibración al cargar - try/catch to prevent errors
   useEffect(() => {
     if (!hasVibrated && "vibrate" in navigator) {
-      navigator.vibrate(10) // Vibración sutil
-      setHasVibrated(true)
+      try {
+        // Only try to vibrate if the document has received user interaction
+        if (document.hasFocus()) {
+          navigator.vibrate(10) // Vibración sutil
+        }
+        setHasVibrated(true)
+      } catch (e) {
+        // Ignore vibration errors silently
+        setHasVibrated(true)
+      }
     }
   }, [hasVibrated])
 
   const handlePermitir = () => {
     setIsLoading(true)
 
-    // Vibración táctil
+    // Vibración táctil - with error handling
     if ("vibrate" in navigator) {
-      navigator.vibrate(15)
+      try {
+        navigator.vibrate(15)
+      } catch (e) {
+        // Ignore vibration errors
+      }
     }
 
     if (navigator.geolocation) {
@@ -35,23 +47,36 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
           onPermission(position)
         },
         (error) => {
-          console.error("Error obteniendo ubicación:", error)
+          // Only log in development
+          if (process.env.NODE_ENV === 'development') {
+            console.error("Error obteniendo ubicación:", error)
+          }
           setIsLoading(false)
           onPermission(null)
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+        { 
+          enableHighAccuracy: true, 
+          timeout: 15000, 
+          maximumAge: 10000 // Accept positions up to 10 seconds old
+        },
       )
     } else {
-      console.error("Geolocalización no soportada")
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Geolocalización no soportada")
+      }
       setIsLoading(false)
       onPermission(null)
     }
   }
 
   const handleSkip = () => {
-    // Vibración táctil
+    // Vibración táctil - with error handling
     if ("vibrate" in navigator) {
-      navigator.vibrate(10)
+      try {
+        navigator.vibrate(10)
+      } catch (e) {
+        // Ignore vibration errors
+      }
     }
     onPermission(null)
   }

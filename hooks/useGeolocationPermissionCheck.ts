@@ -1,24 +1,21 @@
 import { useState, useEffect } from 'react';
 
-type PermissionState = PermissionState | 'checking' | 'unsupported';
+type GeolocationPermissionState = 'granted' | 'denied' | 'prompt' | 'checking' | 'unsupported';
 
 interface GeolocationCheckResult {
-  permission: PermissionState;
+  permission: GeolocationPermissionState;
   position: GeolocationPosition | null;
   error: GeolocationPositionError | Error | null;
 }
 
-/**
- * Checks geolocation permission status on mount and attempts to get the 
- * initial position if permission is already granted.
- */
 export function useGeolocationPermissionCheck(): GeolocationCheckResult {
-  const [permission, setPermission] = useState<PermissionState>('checking');
+  const [permission, setPermission] = useState<GeolocationPermissionState>('checking');
   const [position, setPosition] = useState<GeolocationPosition | null>(null);
   const [error, setError] = useState<GeolocationPositionError | Error | null>(null);
 
   useEffect(() => {
     let isMounted = true; // Prevent state updates on unmounted component
+    let watchId: number | null = null;
 
     const checkPermissions = async () => {
       if (!navigator.permissions || !navigator.geolocation) {
@@ -34,7 +31,7 @@ export function useGeolocationPermissionCheck(): GeolocationCheckResult {
         setPermission(permissionStatus.state);
 
         if (permissionStatus.state === "granted") {
-          navigator.geolocation.getCurrentPosition(
+          watchId = navigator.geolocation.watchPosition(
             (pos) => {
               if (isMounted) {
                 setPosition(pos);
@@ -42,13 +39,21 @@ export function useGeolocationPermissionCheck(): GeolocationCheckResult {
               }
             },
             (err) => {
-              console.error("Error getting location even with permission:", err);
-              if (isMounted) {
+              // Only update error state on first error, don't spam the console
+              if (isMounted && (!error || error.message !== err.message)) {
                 setError(err);
-                setPosition(null);
+                // Only log in development and avoid repeated logging
+                if (process.env.NODE_ENV === 'development') {
+                  console.error("Error getting location even with permission:", err);
+                }
               }
+              // Keep last known position even if update fails
             },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            { 
+              enableHighAccuracy: true, 
+              timeout: 15000, 
+              maximumAge: 60000 // Accept positions up to a minute old
+            }
           );
         } else {
           // If prompt or denied, position remains null
@@ -68,7 +73,9 @@ export function useGeolocationPermissionCheck(): GeolocationCheckResult {
         };
 
       } catch (err) {
-        console.error("Error checking geolocation permission:", err);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error checking geolocation permission:", err);
+        }
         if (isMounted) {
           setError(err instanceof Error ? err : new Error("Permission query failed"));
           setPermission('denied'); // Treat query error as denied for simplicity
@@ -82,8 +89,9 @@ export function useGeolocationPermissionCheck(): GeolocationCheckResult {
     // Cleanup function
     return () => {
       isMounted = false;
-      // We could potentially remove the onchange listener here if needed,
-      // but it's often cleaned up automatically when the component unmounts.
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
     };
   }, []); // Empty dependency array ensures this runs only once on mount
 
