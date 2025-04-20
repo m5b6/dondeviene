@@ -251,7 +251,7 @@ export default function PermitirUbicacion({
               onClick={handleSkip}
               className="apple-button w-full py-3 text-gray-500 text-sm font-medium hover:text-black transition-colors"
             >
-              Continuar sin ubicación
+              Seleccionar manualmente
             </button>
           </motion.div>
         </motion.div>

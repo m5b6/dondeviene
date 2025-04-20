@@ -88,15 +88,15 @@ export function usePreciseGeolocation(
       
       const options = {
         enableHighAccuracy: true,
-        maximumAge: 100,
+        maximumAge: 10000,
         timeout: 50000
       };
       
-      setPermission("granted"); // Optimistically set permission
+      setPermission("granted"); 
       
       watchIdRef.current = navigator.geolocation.watchPosition(
         (pos) => {
-          setPermission("granted"); // Confirm permission
+          setPermission("granted"); 
           setPosition(pos);
           setError(null);
         },

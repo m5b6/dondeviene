@@ -14,11 +14,12 @@ const MapaParaderos = dynamic(() => import('./map'), {
 
 interface ConfirmarParaderoProps {
   location: GeolocationPosition | null;
+  manualParaderoCode?: string | null;
   onConfirm: (paradero: ParaderoInfo) => void;
   onBack: () => void;
 }
 
-export default function ConfirmarParadero({ location, onConfirm, onBack }: ConfirmarParaderoProps) {
+export default function ConfirmarParadero({ location, manualParaderoCode, onConfirm, onBack }: ConfirmarParaderoProps) {
   const [paraderos, setParaderos] = useState<ParaderoInfo[]>([]);
   const [selectedParadero, setSelectedParadero] = useState<ParaderoInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,9 +27,10 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
 
   const userCoords = location ? { latitude: location.coords.latitude, longitude: location.coords.longitude } : null;
 
+  // Fetch nearby paraderos based on location
   useEffect(() => {
-    if (!location) {
-      setError("No se pudo obtener la ubicación.");
+    if (!location && !manualParaderoCode) {
+      setError("No se pudo obtener la ubicación ni se proporcionó un código de paradero.");
       setIsLoading(false);
       return;
     }
@@ -36,22 +38,24 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
     const getParaderos = async () => {
       setIsLoading(true);
       setError(null);
-      const { latitude, longitude } = location.coords;
       
       try {
-        const nearbyParaderos = await fetchNearbyParaderos(latitude, longitude);
+        if (location) {
+          const { latitude, longitude } = location.coords;
+          const nearbyParaderos = await fetchNearbyParaderos(latitude, longitude);
 
-        if (nearbyParaderos.length > 0) {
-          setParaderos(nearbyParaderos);
-          setSelectedParadero(nearbyParaderos[0]);
+          if (nearbyParaderos.length > 0) {
+            setParaderos(nearbyParaderos);
+            setSelectedParadero(nearbyParaderos[0]);
 
-          if ("vibrate" in navigator) {
-            navigator.vibrate(10);
+            if ("vibrate" in navigator) {
+              navigator.vibrate(10);
+            }
+          } else {
+            setError("No se encontraron paraderos cercanos.");
+            setParaderos([]);
+            setSelectedParadero(null);
           }
-        } else {
-           setError("No se encontraron paraderos cercanos.");
-           setParaderos([]);
-           setSelectedParadero(null);
         }
       } catch (err: any) {
         setError(err.message || "Error al buscar paraderos. Intenta de nuevo.");
@@ -62,8 +66,53 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
       }
     };
 
-    getParaderos();
-  }, [location]);
+    // Only fetch nearby paraderos if there's no manual code
+    if (!manualParaderoCode) {
+      getParaderos();
+    }
+  }, [location, manualParaderoCode]);
+
+  // Fetch specific paradero by code
+  useEffect(() => {
+    if (!manualParaderoCode) return;
+
+    const getParaderoByCode = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // This is a placeholder implementation - you would need to implement an actual API call
+        // to fetch paradero details by code in your fetchParaderoByCode function
+        
+        // Simulating a paradero result for now
+        // In a real implementation, you would make an API call to get paradero details
+        setTimeout(() => {
+          const manualParadero: ParaderoInfo = {
+            id: 0, // Placeholder ID
+            cod: manualParaderoCode,
+            name: `Paradero ${manualParaderoCode}`, // You'd get the real name from API
+            distance: 0, // We don't know the distance for manual selection
+            pos: [0, 0] // You'd get the real position from API
+          };
+          
+          setParaderos([manualParadero]);
+          setSelectedParadero(manualParadero);
+          setIsLoading(false);
+          
+          if ("vibrate" in navigator) {
+            navigator.vibrate(10);
+          }
+        }, 500);
+      } catch (err: any) {
+        setError(`Error al buscar el paradero ${manualParaderoCode}. Intenta de nuevo.`);
+        setParaderos([]);
+        setSelectedParadero(null);
+        setIsLoading(false);
+      }
+    };
+    
+    getParaderoByCode();
+  }, [manualParaderoCode]);
 
   const handleConfirm = () => {
     if (selectedParadero) {

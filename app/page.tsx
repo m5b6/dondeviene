@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import PermitirUbicacion from "@/components/askLocation"
+import AskLocationOrParadero, { LocationResult } from "@/components/askLocationOrParadero"
 import ConfirmarParadero from "@/components/busStops"
 import SeleccionarDestino from "@/components/selectBus"
 import ActivarAlertas from "@/components/activar-alertas"
@@ -23,13 +24,22 @@ export default function Home() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [locationAttempts, setLocationAttempts] = useState(0)
   const [forceAllowNextStep, setForceAllowNextStep] = useState(false)
+  const [manualParaderoCode, setManualParaderoCode] = useState<string | null>(null)
 
-
-
-
-  const handleLocationPermission = (position: GeolocationPosition | null) => {
+  const handleLocationResult = (result: LocationResult) => {
     setIsTransitioning(true)
-    setLocation(position)
+    
+    if (result.type === "location") {
+      setLocation(result.position)
+      setManualParaderoCode(null)
+    } else if (result.type === "paradero") {
+      setLocation(null)
+      setManualParaderoCode(result.paradero)
+    } else {
+      setLocation(null)
+      setManualParaderoCode(null)
+    }
+    
     setTimeout(() => {
       setStep(2)
       setIsTransitioning(false)
@@ -112,9 +122,8 @@ export default function Home() {
             transition={{ duration: 0.3 }}
             className="h-screen"
           >
-            <PermitirUbicacion
-              onPermission={handleLocationPermission}
-              onProceedWithoutLocation={handleProceedWithoutLocation}
+            <AskLocationOrParadero
+              onResult={handleLocationResult}
               forceAllowNextStep={forceAllowNextStep}
             />
           </motion.div>
@@ -131,7 +140,8 @@ export default function Home() {
           >
             <ConfirmarParadero
               location={location}
-              onConfirm={handleParaderoConfirm} // Now matches the expected type
+              manualParaderoCode={manualParaderoCode}
+              onConfirm={handleParaderoConfirm}
               onBack={handleBack}
             />
           </motion.div>
@@ -160,8 +170,7 @@ export default function Home() {
             className="h-screen"
           >
             <ActivarAlertas
-              // Convert id to string if ActivarAlertas expects string
-              paradero={selectedParadero ? selectedParadero.cod : ""} // Pass cod instead, which is string
+              paradero={selectedParadero ? selectedParadero.cod : ""}
               destino={destination}
               onComplete={handleComplete}
               onBack={handleBack}
