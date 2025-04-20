@@ -7,7 +7,7 @@ import { RedParadero } from "../types/red"
 import dynamic from 'next/dynamic'
 import { fetchNearbyParaderos, ParaderoInfo } from "../lib/fetch-paraderos"
 
-const MapaParaderos = dynamic(() => import('./mapa-paraderos'), {
+const MapaParaderos = dynamic(() => import('./map'), {
     ssr: false,
     loading: () => <div className="h-full w-full flex items-center justify-center bg-gray-200">Cargando mapa...</div>
 });
@@ -100,16 +100,14 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
         </svg>
       </button>
 
-      {/* Map Container - Use the dynamically imported component */}
       <div className="flex-1 relative">
         <MapaParaderos
             userLocation={userCoords}
             selectedParadero={selectedParadero}
-            isLoading={isLoading && paraderos.length === 0} // Show map loading indicator only initially
+            isLoading={isLoading && paraderos.length === 0}
         />
       </div>
 
-      {/* Bottom Card */}
       <motion.div
         className="bg-white/90 backdrop-blur-xl w-full rounded-t-3xl shadow-vision p-6 pb-safe"
         initial={{ y: 100 }}

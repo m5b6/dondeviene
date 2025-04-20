@@ -1,6 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
-type PermissionState = "granted" | "denied" | "prompting" | "unsupported" | "idle";
+type PermissionState =
+  | "granted"
+  | "denied"
+  | "prompting"
+  | "unsupported"
+  | "idle";
 
 interface Result {
   permission: PermissionState;
@@ -9,101 +14,128 @@ interface Result {
   requestPermission: () => void;
 }
 
-export function useGeolocation(
-  options: PositionOptions = {
-    enableHighAccuracy: true,
-    timeout: 5000,
-    maximumAge: 60000,
-  }
+export function usePreciseGeolocation(
+  watchTimeoutMs = 5000, // Time to watch position before clearing
+  maxRetries = 3
 ): Result {
   const [permission, setPermission] = useState<PermissionState>("idle");
   const [position, setPosition] = useState<GeolocationPosition | null>(null);
-  const [error, setError] = useState<GeolocationPositionError | Error | null>(null);
+  const [error, setError] = useState<GeolocationPositionError | Error | null>(
+    null
+  );
+  const retriesRef = useRef(0);
   const watchIdRef = useRef<number | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const clearWatcher = () => {
+  // Clear any existing watchers and timeouts
+  const clearWatcherAndTimeout = () => {
     if (watchIdRef.current != null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
+    
+    if (timeoutRef.current != null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
   };
 
-  const startWatching = useCallback((opts: PositionOptions) => {
-    clearWatcher();
+  // Start watching with a timeout to get accurate position
+  const startWatchWithTimeout = () => {
+    clearWatcherAndTimeout();
+    
+    const options = {
+      enableHighAccuracy: true,
+      maximumAge: 100,
+      timeout: 50000
+    };
+    
     watchIdRef.current = navigator.geolocation.watchPosition(
-      (p) => {
-        setPosition(p);
+      (pos) => {
+        setPosition(pos);
         setError(null);
       },
       (err) => {
+        console.log("Error al obtener la ubicación:", err);
         setError(err);
-        // If unavailable, retry with lower accuracy once
-        if (err.code === err.POSITION_UNAVAILABLE && opts.enableHighAccuracy) {
-          console.warn("High accuracy failed, retrying with low accuracy");
-          startWatching({ 
-            ...opts, 
-            enableHighAccuracy: false, 
-            timeout: opts.timeout ? opts.timeout * 2 : 10000 
-          });
-        }
       },
-      opts
+      options
     );
-  }, []);
+    
+    // Set timeout to clear the watch after specified time
+    timeoutRef.current = setTimeout(() => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    }, watchTimeoutMs);
+  };
 
-  const requestPermission = useCallback(() => {
+  // Core request+retry logic
+  const requestPermission = () => {
     if (!navigator.geolocation) {
       setPermission("unsupported");
       setError(new Error("Geolocation API not supported"));
       return;
     }
 
+    setError(null);
     setPermission("prompting");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPermission("granted");
-        setPosition(pos);
-        setError(null);
-        startWatching(options);
-      },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setPermission("denied");
-        } else if (err.code === err.POSITION_UNAVAILABLE) {
-          // Try a direct fallback getCurrentPosition with lower accuracy
-          console.warn("Position unavailable, retrying with low accuracy");
-          const fallbackOptions = {
-            ...options, 
-            enableHighAccuracy: false, 
-            timeout: options.timeout ? options.timeout * 2 : 10000
-          };
-          
-          navigator.geolocation.getCurrentPosition(
-            (pos2) => {
-              setPermission("granted");
-              setPosition(pos2);
-              setError(null);
-              startWatching(fallbackOptions);
-            },
-            (err2) => {
-              setError(err2);
-            },
-            fallbackOptions
-          );
-        } else {
-          setError(err);
-        }
-        setPosition(null);
-      },
-      options
-    );
-  }, [options, startWatching]);
+    retriesRef.current = 0;
 
-  useEffect(() => {
-    return () => {
-      clearWatcher();
+    const attempt = () => {
+      clearWatcherAndTimeout();
+      
+      const options = {
+        enableHighAccuracy: true,
+        maximumAge: 100,
+        timeout: 50000
+      };
+      
+      setPermission("granted"); // Optimistically set permission
+      
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        (pos) => {
+          setPermission("granted"); // Confirm permission
+          setPosition(pos);
+          setError(null);
+        },
+        (err) => {
+          console.log("Error al obtener la ubicación:", err);
+          setError(err);
+          
+          if (err.code === err.PERMISSION_DENIED) {
+            setPermission("denied");
+            clearWatcherAndTimeout();
+          } else if (
+            (err.code === err.POSITION_UNAVAILABLE || 
+             err.code === err.TIMEOUT) &&
+            retriesRef.current < maxRetries
+          ) {
+            retriesRef.current++;
+            // Wait 1s before retrying
+            setTimeout(() => attempt(), 1000);
+          }
+        },
+        options
+      );
+      
+      // Set timeout to clear the watch after specified time
+      timeoutRef.current = setTimeout(() => {
+        if (watchIdRef.current !== null) {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+          watchIdRef.current = null;
+        }
+      }, watchTimeoutMs);
     };
+    
+    attempt();
+  };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => clearWatcherAndTimeout();
   }, []);
 
   return { permission, position, error, requestPermission };
-} 
+}

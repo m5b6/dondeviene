@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import MapPlaceholder from "./map-placeholder"
+import MapPlaceholder from "./mapLoading"
 import { motion } from "framer-motion"
 
 interface ActivarAlertasProps {

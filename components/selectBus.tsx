@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import MapPlaceholder from "./map-placeholder"
+import MapPlaceholder from "./mapLoading"
 
 // Define animation variants
 const cardVariants = {

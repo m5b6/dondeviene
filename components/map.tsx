@@ -2,10 +2,10 @@
 
 import * as React from 'react';
 import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox';
-import type { LayerProps } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { ParaderoInfo } from "../lib/fetch-paraderos";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchWalkingRoute, getRouteLineLayer, RouteData } from '../lib/mapbox-routing';
 
 interface MapaParaderosProps {
   userLocation: { latitude: number; longitude: number } | null;
@@ -21,6 +21,8 @@ export default function MapaParaderos({
   isLoading = false
 }: MapaParaderosProps) {
   const mapRef = React.useRef<any>(null);
+  const [routeData, setRouteData] = useState<RouteData | null>(null);
+  const [isRouteFetching, setIsRouteFetching] = useState(false);
 
   // Fit bounds when paradero is selected
   useEffect(() => {
@@ -34,47 +36,48 @@ export default function MapaParaderos({
         [Math.min(userLocation.longitude, selectedParadero.pos[1]), Math.min(userLocation.latitude, selectedParadero.pos[0])],
         [Math.max(userLocation.longitude, selectedParadero.pos[1]), Math.max(userLocation.latitude, selectedParadero.pos[0])]
       ];
-      
-      // Add padding to ensure both points are clearly visible
       mapRef.current.fitBounds(bounds, {
         padding: { top: 80, bottom: 80, left: 80, right: 80 },
         duration: 1000
       });
     } catch (err) {
-      // Silently handle map errors without console spam
-      // Only log in development if needed
-      // console.error("Error adjusting map view:", err);
+ 
     }
   }, [selectedParadero?.pos[0], selectedParadero?.pos[1], userLocation?.latitude, userLocation?.longitude]);
   
-  // Create GeoJSON for the route line
-  const routeData = React.useMemo(() => {
-    if (!userLocation || !selectedParadero) return null;
+  useEffect(() => {
+    if (!userLocation || !selectedParadero) {
+      setRouteData(null);
+      return;
+    }
     
-    return {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'LineString',
-        coordinates: [
-          [userLocation.longitude, userLocation.latitude],
-          [selectedParadero.pos[1], selectedParadero.pos[0]]
-        ]
+    const getRoute = async () => {
+      setIsRouteFetching(true);
+      try {
+        const start = {
+          longitude: userLocation.longitude,
+          latitude: userLocation.latitude
+        };
+        
+        const end = {
+          longitude: selectedParadero.pos[1],
+          latitude: selectedParadero.pos[0]
+        };
+        
+        const routeResult = await fetchWalkingRoute(start, end);
+        setRouteData(routeResult);
+      } catch (error) {
+        console.error('Error fetching route:', error);
+      } finally {
+        setIsRouteFetching(false);
       }
     };
+    
+    getRoute();
   }, [userLocation, selectedParadero]);
 
-  // Line style
-  const lineLayer: LayerProps = {
-    id: 'route',
-    type: 'line',
-    paint: {
-      'line-color': '#3b82f6',
-      'line-width': 4,
-      'line-opacity': 0.8,
-      'line-dasharray': [0.5, 1.5]
-    }
-  };
+  // Get the line layer styling from our utility
+  const lineLayer = getRouteLineLayer();
   
   return (
     <div className="h-full w-full relative">
@@ -89,7 +92,7 @@ export default function MapaParaderos({
         style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/mapbox/dark-v11"
       >
-        {/* Route line between user and paradero */}
+        {/* Route line between user and paradero using actual streets */}
         {routeData && (
           <Source id="route" type="geojson" data={routeData as any}>
             <Layer {...lineLayer} />
@@ -122,8 +125,8 @@ export default function MapaParaderos({
         )}
       </Map>
 
-      {/* Loading overlay */}
-      {isLoading && (
+      {/* Loading overlay - show when map is loading or route is fetching */}
+      {(isLoading || isRouteFetching) && (
         <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center z-10">
           <div className="animate-spin h-8 w-8 border-4 border-white border-t-transparent rounded-full"></div>
         </div>

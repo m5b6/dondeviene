@@ -1,47 +1,49 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import MapPlaceholder from "./map-placeholder"
+import MapPlaceholder from "./mapLoading"
 import { motion } from "framer-motion"
+import { usePreciseGeolocation } from "../hooks/useGeolocation"
 
 interface PermitirUbicacionProps {
   onPermission: (position: GeolocationPosition | null) => void;
   onRetry?: () => void;
   onProceedWithoutLocation?: () => void;
-  error?: GeolocationPositionError | Error | null;
   forceAllowNextStep?: boolean;
-  permission?: "granted" | "denied" | "prompting" | "unsupported" | "idle";
 }
 
 export default function PermitirUbicacion({ 
   onPermission, 
   onRetry, 
   onProceedWithoutLocation, 
-  error: externalError, 
-  forceAllowNextStep = false,
-  permission: externalPermission
+  forceAllowNextStep = false
 }: PermitirUbicacionProps) {
-  const [isLoading, setIsLoading] = useState(false)
   const [hasVibrated, setHasVibrated] = useState(false)
-  const [permissionError, setPermissionError] = useState<string | null>(null)
+  const [buttonLoading, setButtonLoading] = useState(false)
+  
+  const { 
+    permission, 
+    position, 
+    error, 
+    requestPermission 
+  } = usePreciseGeolocation();
 
-  // Handle external error coming from useGeolocation hook
+  // Pass position to parent component when we get it
   useEffect(() => {
-    if (externalError) {
-      if ('code' in externalError) {
-        if (externalError.code === 1) { // PERMISSION_DENIED
-          setPermissionError("Permiso denegado. Por favor activa la ubicación en tu navegador.")
-        } else if (externalError.code === 2) { // POSITION_UNAVAILABLE
-          setPermissionError("No se pudo obtener tu ubicación. Intenta de nuevo.")
-        } else if (externalError.code === 3) { // TIMEOUT
-          setPermissionError("La búsqueda de ubicación tomó demasiado tiempo. Intenta de nuevo.")
-        }
-      } else {
-        setPermissionError("Error al obtener tu ubicación. Intenta de nuevo.")
-      }
+    if (position && permission === "granted") {
+      setButtonLoading(false);
+      onPermission(position);
     }
-  }, [externalError])
+  }, [position, permission, onPermission]);
 
+  // Handle error state changes
+  useEffect(() => {
+    if (error || permission === "denied" || permission === "unsupported") {
+      setButtonLoading(false);
+    }
+  }, [error, permission]);
+
+  // Handle vibration effect
   useEffect(() => {
     if (!hasVibrated && "vibrate" in navigator) {
       try {
@@ -56,16 +58,9 @@ export default function PermitirUbicacion({
   }, [hasVibrated])
 
   const handlePermitir = () => {
-    setIsLoading(true)
-    setPermissionError(null)
-
-    // If we have an onRetry function from the parent, use that
-    if (onRetry) {
-      onRetry();
-      setIsLoading(false);
-      return;
-    }
-
+    // Set button to loading state
+    setButtonLoading(true);
+    
     // Vibración táctil - with error handling
     if ("vibrate" in navigator) {
       try {
@@ -75,43 +70,14 @@ export default function PermitirUbicacion({
       }
     }
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setIsLoading(false)
-          onPermission(position)
-        },
-        (error) => {
-          setIsLoading(false)
-
-          if (error.code === 1) { // PERMISSION_DENIED
-            setPermissionError("Permiso denegado. Por favor activa la ubicación en tu navegador.")
-          } else if (error.code === 2) { // POSITION_UNAVAILABLE
-            setPermissionError("No se pudo obtener tu ubicación. Intenta de nuevo.")
-          } else if (error.code === 3) { // TIMEOUT
-            setPermissionError("La búsqueda de ubicación tomó demasiado tiempo. Intenta de nuevo.")
-          } else {
-            setPermissionError("Error al obtener tu ubicación. Intenta de nuevo.")
-          }
-
-          // Only log in development
-          if (process.env.NODE_ENV === 'development') {
-            console.error("Error obteniendo ubicación:", error)
-          }
-
-          onPermission(null)
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000, // 10 seconds
-          maximumAge: 30000 // Accept positions up to 30 seconds old to improve reliability
-        },
-      )
-    } else {
-      setIsLoading(false)
-      setPermissionError("Tu navegador no soporta geolocalización.")
-      onPermission(null)
+    // If we have an onRetry function from the parent, use that
+    if (onRetry) {
+      onRetry();
+      return;
     }
+
+    // Otherwise request permission using our hook
+    requestPermission();
   }
 
   const handleSkip = () => {
@@ -129,6 +95,21 @@ export default function PermitirUbicacion({
     } else {
       onPermission(null);
     }
+  }
+
+  const getErrorMessage = () => {
+    if (!error) return null;
+    
+    if ('code' in error) {
+      if (error.code === 1) { // PERMISSION_DENIED
+        return "Permiso denegado. Por favor activa la ubicación en tu navegador."
+      } else if (error.code === 2) { // POSITION_UNAVAILABLE
+        return "No se pudo obtener tu ubicación. Intenta de nuevo."
+      } else if (error.code === 3) { // TIMEOUT
+        return "La búsqueda de ubicación tomó demasiado tiempo. Intenta de nuevo."
+      }
+    }
+    return "Error al obtener tu ubicación. Intenta de nuevo."
   }
 
   // Efecto de parallax para el fondo
@@ -157,6 +138,8 @@ export default function PermitirUbicacion({
       window.removeEventListener("deviceorientation", handleDeviceOrientation)
     }
   }, [])
+
+  const permissionError = getErrorMessage();
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
@@ -232,10 +215,10 @@ export default function PermitirUbicacion({
 
             <button
               onClick={handlePermitir}
-              disabled={isLoading}
+              disabled={buttonLoading}
               className="apple-button w-full py-4 border-2 border-black text-black font-medium text-lg hover:bg-black hover:text-white transition-colors  hover:shadow-lg active:scale-[0.98]"
             >
-              {isLoading ? (
+              {buttonLoading ? (
                 <span className="flex items-center justify-center">
                   <svg
                     className="animate-spin -ml-1 mr-3 h-5 w-5 text-current"
@@ -260,7 +243,7 @@ export default function PermitirUbicacion({
                   Cargando...
                 </span>
               ) : (
-                externalError ? "Reintentar" : "Permitir"
+                error ? "Reintentar" : "Permitir"
               )}
             </button>
 
