@@ -32,6 +32,10 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
         { id: "1234", distance: 200 },
         { id: "5678", distance: 350 },
         { id: "9012", distance: 480 },
+        { id: "A3B4", distance: 600 },
+        { id: "C5D6", distance: 750 },
+        { id: "E7F8", distance: 900 },
+        { id: "G9H0", distance: 1100 },
       ]
       setParaderos(mockParaderos)
       setSelectedParadero(mockParaderos[0])
@@ -92,7 +96,8 @@ export default function ConfirmarParadero({ location, onConfirm, onBack }: Confi
           <span className="mr-2 text-2xl">🚏</span> ¿Este es tu paradero?
         </h2>
 
-        <div className="flex-1 overflow-y-auto">
+        {/* Container for list/loader with fixed height and scroll */}
+        <div className="h-[250px] overflow-y-auto pr-1">
           {isLoading ? (
             <div className="flex justify-center items-center py-8">
               <svg

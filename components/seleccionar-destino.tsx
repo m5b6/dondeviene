@@ -5,6 +5,30 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import MapPlaceholder from "./map-placeholder"
 
+// Define animation variants
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: 0.2,
+      duration: 0.5,
+      ease: "easeOut",
+      staggerChildren: 0.1, // Stagger child animations
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
+}
+
 interface MicroRoute {
   id: string
   name: string
@@ -25,6 +49,7 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
   const [mode, setMode] = useState<"input" | "micro">("micro")
   const [microRoutes, setMicroRoutes] = useState<MicroRoute[]>([])
   const [selectedMicro, setSelectedMicro] = useState<MicroRoute | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -53,52 +78,56 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
 
   // Simulación de rutas de micro
   useEffect(() => {
+    setIsLoading(true)
     // Aquí se conectaría con una API real para obtener rutas de micro
-    const mockMicroRoutes: MicroRoute[] = [
-      {
-        id: "506",
-        name: "506",
-        destination: "Maipú",
-        estimatedArrival: "5 min",
-      },
-      {
-        id: "210",
-        name: "210",
-        destination: "Estación Central",
-        estimatedArrival: "8 min",
-      },
-      {
-        id: "D18",
-        name: "D18",
-        destination: "Las Condes",
-        estimatedArrival: "12 min",
-      },
-      {
-        id: "401",
-        name: "401",
-        destination: "Providencia",
-        estimatedArrival: "15 min",
-      },
-      {
-        id: "106",
-        name: "106",
-        destination: "Peñalolén",
-        estimatedArrival: "18 min",
-      },
-      {
-        id: "B02",
-        name: "B02",
-        destination: "Mapocho",
-        estimatedArrival: "20 min",
-      },
-      {
-        id: "303",
-        name: "303",
-        destination: "Quilicura",
-        estimatedArrival: "25 min",
-      },
-    ]
-    setMicroRoutes(mockMicroRoutes)
+    setTimeout(() => {
+      const mockMicroRoutes: MicroRoute[] = [
+        {
+          id: "506",
+          name: "506",
+          destination: "Maipú",
+          estimatedArrival: "5 min",
+        },
+        {
+          id: "210",
+          name: "210",
+          destination: "Estación Central",
+          estimatedArrival: "8 min",
+        },
+        {
+          id: "D18",
+          name: "D18",
+          destination: "Las Condes",
+          estimatedArrival: "12 min",
+        },
+        {
+          id: "401",
+          name: "401",
+          destination: "Providencia",
+          estimatedArrival: "15 min",
+        },
+        {
+          id: "106",
+          name: "106",
+          destination: "Peñalolén",
+          estimatedArrival: "18 min",
+        },
+        {
+          id: "B02",
+          name: "B02",
+          destination: "Mapocho",
+          estimatedArrival: "20 min",
+        },
+        {
+          id: "303",
+          name: "303",
+          destination: "Quilicura",
+          estimatedArrival: "25 min",
+        },
+      ]
+      setMicroRoutes(mockMicroRoutes)
+      setIsLoading(false)
+    }, 1000)
   }, [])
 
   // Auto-focus en el input al cargar
@@ -234,15 +263,13 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
       >
         <motion.div
           className="w-full max-w-md vision-card p-6"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
+          variants={cardVariants} // Apply card variants
+          initial="hidden"
+          animate="visible"
         >
           <motion.h2
             className="text-2xl font-bold mb-6 text-center tracking-tight flex items-center justify-center"
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
+            variants={itemVariants} // Apply item variants
           >
             <span className="mr-2 text-2xl">🔍</span> Seleccionar Destino
           </motion.h2>
@@ -252,9 +279,7 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
             style={{
               borderRadius: "18px",
             }}
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
+            variants={itemVariants} // Apply item variants
           >
             <button
               className={`segmented-control-option ${mode === "micro" ? "active" : ""}`}
@@ -270,95 +295,139 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
             </button>
           </motion.div>
 
-          <AnimatePresence mode="wait">
-            {mode === "input" ? (
-              <motion.div
-                key="input-mode"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="relative h-[360px] overflow-y-auto pr-1"
-              >
-                <div
-                  className={`relative transition-all duration-300 scale-[0.97] ${isFocused ? "scale-[1]" : ""}`}
+          {/* Wrap content area for variant application */}
+          <motion.div variants={itemVariants}>
+            <AnimatePresence mode="wait">
+              {mode === "input" ? (
+                <motion.div
+                  key="input-mode"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative h-[360px] overflow-y-auto pr-1"
                 >
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={destino}
-                    onChange={handleInputChange}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    placeholder="¿A dónde vas?"
-                    className="apple-input"
-                    aria-label="Destino"
-                  />
-                </div>
+                  <div
+                    className={`relative transition-all duration-300 scale-[0.97] ${isFocused ? "scale-[1]" : ""}`}
+                  >
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={destino}
+                      onChange={handleInputChange}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                      placeholder="¿A dónde vas?"
+                      className="apple-input"
+                      aria-label="Destino"
+                    />
+                  </div>
 
-                <AnimatePresence>
-                  {sugerencias.length > 0 && (
-                    <motion.ul
-                      className="mt-2 bg-white/90 backdrop-blur-md rounded-2xl shadow-vision overflow-hidden"
-                      initial={{ y: -10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -10, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      style={{
-                        border: "1px solid rgba(255, 255, 255, 0.5)",
-                      }}
-                    >
-                      {sugerencias.map((sugerencia, index) => (
-                        <motion.li
-                          key={index}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          onClick={() => handleSelectSugerencia(sugerencia)}
-                          className="apple-list-item hover:bg-accent/10"
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          {sugerencia}
-                        </motion.li>
-                      ))}
-                    </motion.ul>
+                  <AnimatePresence>
+                    {sugerencias.length > 0 && (
+                      <motion.ul
+                        className="mt-2 bg-white/90 backdrop-blur-md rounded-2xl shadow-vision overflow-hidden"
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -10, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        style={{
+                          border: "1px solid rgba(255, 255, 255, 0.5)",
+                        }}
+                      >
+                        {sugerencias.map((sugerencia, index) => (
+                          <motion.li
+                            key={index}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            onClick={() => handleSelectSugerencia(sugerencia)}
+                            className="apple-list-item hover:bg-accent/10"
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {sugerencia}
+                          </motion.li>
+                        ))}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="micro-mode"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative h-[360px] overflow-y-auto pr-1"
+                >
+                  {isLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                      <svg
+                        className="animate-spin h-8 w-8 text-black"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {microRoutes.map((micro, index) => {
+                        const isSelected = selectedMicro?.id === micro.id
+                        return (
+                          <motion.div
+                            key={micro.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-colors duration-150 ${isSelected
+                                ? "bg-black text-white"
+                                : "bg-white/50 hover:bg-gray-100 shadow-md"
+                              }`}
+                            onClick={() => handleSelectMicro(micro)}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center">
+                                <span className="text-xl mr-2">🚌</span>
+                                <span className={`font-semibold text-lg ${isSelected ? "text-white" : ""}`}>
+                                  {micro.name}
+                                </span>
+                              </div>
+                              <div className={`text-sm mt-1 ${isSelected ? "text-gray-300" : "text-gray"}`}>
+                                → {micro.destination}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className={`font-medium ${isSelected ? "text-white" : "text-accent"}`}>
+                                {micro.estimatedArrival}
+                              </div>
+                              <div className="flex items-center justify-end mt-1">
+                                <span className="relative flex h-2 w-2 mr-1">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                </span>
+                                <span className={`text-xs font-medium ${isSelected ? "text-green-300" : "text-green-600"}`}>
+                                  en vivo
+                                </span>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )
+                      })}
+                    </div>
                   )}
-                </AnimatePresence>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="micro-mode"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="relative h-[360px] overflow-y-auto pr-1"
-              >
-                <div className="space-y-3">
-                  {microRoutes.map((micro, index) => (
-                    <motion.div
-                      key={micro.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`micro-route-item ${selectedMicro?.id === micro.id ? "selected" : ""}`}
-                      onClick={() => handleSelectMicro(micro)}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <span className="text-xl mr-2">🚌</span>
-                          <span className="font-semibold text-lg">{micro.name}</span>
-                        </div>
-                        <div className="text-sm text-gray mt-1">→ {micro.destination}</div>
-                      </div>
-                      <div className="text-accent font-medium">{micro.estimatedArrival}</div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
           <motion.button
             onClick={handleConfirm}
@@ -367,9 +436,6 @@ export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDes
               ? "bg-black text-white hover:bg-white hover:text-black hover:border-2 hover:border-black hover:shadow-lg"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
               } transition-colors`}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
             whileTap={{
               scale: (mode === "input" && destino.trim()) || (mode === "micro" && selectedMicro) ? 0.98 : 1,
             }}
