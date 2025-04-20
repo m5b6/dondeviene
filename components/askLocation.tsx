@@ -129,7 +129,7 @@ export default function AskLocation({
           </h1>
 
           <p className="text-xl text-center mb-8 text-gray font-light">
-            Para mostrarte tu paradero más cercano
+            Para mostrarte tus paraderos más cercanos
           </p>
         </div>
 

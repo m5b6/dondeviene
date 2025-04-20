@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import MapPlaceholder from "./mapLoading"
 import ReloadIndicator from "./ReloadIndicator"
 import BackButton from "./BackButton"
-import BusCard, { MicroRoute, Bus } from "./BusCard"
+import BusCard, { MicroRoute, Bus, IndividualBus } from "./BusCard"
 
 // Define animation variants
 const cardVariants = {
@@ -56,9 +56,9 @@ interface SeleccionarDestinoProps {
 export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA433" }: SeleccionarDestinoProps) {
   const [destino, setDestino] = useState("")
   const [keyboardVisible, setKeyboardVisible] = useState(false)
-  const [microRoutes, setMicroRoutes] = useState<MicroRoute[]>([])
+  const [allBuses, setAllBuses] = useState<IndividualBus[]>([])
   const [busStopInfo, setBusStopInfo] = useState<BusStop | null>(null)
-  const [selectedMicro, setSelectedMicro] = useState<MicroRoute | null>(null)
+  const [selectedBus, setSelectedBus] = useState<IndividualBus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -102,57 +102,48 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
     setBusStopInfo(data);
 
     // Keep track of previous values for animation
-    const prevRoutesMap = microRoutes.reduce((acc, route) => {
-      acc[route.id] = {
-        distance: route.buses[0]?.meters_distance,
-        minTime: route.buses[0]?.min_arrival_time
+    const prevBusesMap = allBuses.reduce((acc, bus) => {
+      acc[`${bus.serviceId}-${bus.id}`] = {
+        distance: bus.metersDistance,
+        minTime: bus.minArrivalTime
       };
       return acc;
-    }, {} as Record<string, { distance?: number, minTime?: number }>);
+    }, {} as Record<string, { distance: number, minTime: number }>);
 
-    // Transform the API data to our component structure
-    const transformedRoutes: MicroRoute[] = data.services.map(service => {
-      // Extract the first bus arrival time (if any)
-      const firstBus = service.buses[0];
-      let estimatedArrival = "No disponible";
+    // Transform the API data to a flat list of all buses
+    const transformedBuses: IndividualBus[] = [];
+    
+    data.services.forEach(service => {
+      if (service.valid && service.buses.length > 0) {
+        service.buses.forEach(bus => {
+          // Add previous values for animations
+          const busKey = `${service.id}-${bus.id}`;
+          const prevValues = prevBusesMap[busKey] || {};
 
-      if (service.valid && firstBus) {
-        if (firstBus.min_arrival_time === 0) {
-          estimatedArrival = "Llegando";
-        } else {
-          estimatedArrival = `${firstBus.min_arrival_time}-${firstBus.max_arrival_time} min`;
-        }
+          transformedBuses.push({
+            id: bus.id,
+            serviceId: service.id,
+            name: service.id,
+            licensePlate: bus.id,
+            metersDistance: bus.meters_distance,
+            minArrivalTime: bus.min_arrival_time,
+            maxArrivalTime: bus.max_arrival_time,
+            status: service.status_description,
+            valid: service.valid,
+            estimatedArrival: bus.min_arrival_time === 0 
+              ? "Llegando" 
+              : `${bus.min_arrival_time}-${bus.max_arrival_time} min`,
+            previousDistance: prevValues.distance,
+            previousMinTime: prevValues.minTime
+          });
+        });
       }
-
-      // Add previous values for animations
-      const prevValues = prevRoutesMap[service.id] || {};
-
-      return {
-        id: service.id,
-        name: service.id,
-        destination: service.valid ? "En servicio" : "Fuera de servicio",
-        estimatedArrival,
-        valid: service.valid,
-        status: service.status_description,
-        buses: service.buses,
-        previousDistance: prevValues.distance,
-        previousMinTime: prevValues.minTime
-      };
     });
 
-    transformedRoutes.sort((a, b) => {
-      if (a.valid !== b.valid) return a.valid ? -1 : 1;
+    // Sort buses by distance (closest first)
+    transformedBuses.sort((a, b) => a.metersDistance - b.metersDistance);
 
-      if (a.valid && b.valid) {
-        const aTime = a.buses[0]?.min_arrival_time ?? Infinity;
-        const bTime = b.buses[0]?.min_arrival_time ?? Infinity;
-        return aTime - bTime;
-      }
-
-      return 0;
-    });
-
-    setMicroRoutes(transformedRoutes);
+    setAllBuses(transformedBuses);
     setIsLoading(false);
   };
 
@@ -182,17 +173,41 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
     }
   }, [keyboardVisible])
 
-  const handleSelectMicro = (micro: MicroRoute) => {
+  const handleSelectBus = (bus: IndividualBus | MicroRoute) => {
     // Vibración táctil
     if ("vibrate" in navigator) {
       navigator.vibrate(10)
     }
-    setSelectedMicro(micro)
-    setDestino(`${micro.name} → ${busStopInfo?.name || ""}`)
+    
+    // Check if it's an IndividualBus or MicroRoute
+    const isIndividualBus = 'serviceId' in bus;
+    
+    if (isIndividualBus) {
+      const individualBus = bus as IndividualBus;
+      setSelectedBus(individualBus)
+      setDestino(`${individualBus.name} → ${busStopInfo?.name || ""}`)
+    } else {
+      // This case shouldn't happen with current implementation but needed for type compatibility
+      const microRoute = bus as MicroRoute;
+      const firstBus: IndividualBus = {
+        id: microRoute.buses[0]?.id || "",
+        serviceId: microRoute.id,
+        name: microRoute.name,
+        licensePlate: microRoute.buses[0]?.id || "",
+        metersDistance: microRoute.buses[0]?.meters_distance || 0,
+        minArrivalTime: microRoute.buses[0]?.min_arrival_time || 0,
+        maxArrivalTime: microRoute.buses[0]?.max_arrival_time || 0,
+        status: microRoute.status,
+        valid: microRoute.valid,
+        estimatedArrival: microRoute.estimatedArrival
+      };
+      setSelectedBus(firstBus)
+      setDestino(`${microRoute.name} → ${busStopInfo?.name || ""}`)
+    }
   }
 
   const handleConfirm = () => {
-    if (selectedMicro) {
+    if (selectedBus) {
       // Vibración táctil
       if ("vibrate" in navigator) {
         navigator.vibrate(15)
@@ -285,7 +300,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
               transition={{ duration: 0.3 }}
               className="relative h-[320px] overflow-y-auto px-1 mb-3 pb-1"
             >
-              {isLoading && microRoutes.length === 0 ? (
+              {isLoading && allBuses.length === 0 ? (
                 <div className="flex justify-center items-center h-full">
                   <svg
                     className="animate-spin h-8 w-8 text-black"
@@ -306,36 +321,51 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
                   <span className="text-3xl mb-3">⚠️</span>
                   <p className="text-gray-700">{error}</p>
                 </div>
-              ) : microRoutes.length === 0 ? (
+              ) : allBuses.length === 0 ? (
                 <div className="flex flex-col justify-center items-center h-full text-center">
                   <span className="text-3xl mb-3">🚫</span>
                   <p className="text-gray-700">No hay buses disponibles en este momento.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {microRoutes.map((micro, index) => (
-                    <BusCard
-                      key={micro.id}
-                      micro={micro}
-                      index={index}
-                      isSelected={selectedMicro?.id === micro.id}
-                      onSelect={handleSelectMicro}
-                    />
-                  ))}
-                </div>
+                <AnimatePresence mode="popLayout">
+                  <div className="space-y-3">
+                    {allBuses.map((bus, index) => (
+                      <motion.div
+                        key={`${bus.serviceId}-${bus.id}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ 
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30,
+                          duration: 0.5 
+                        }}
+                        layout
+                      >
+                        <BusCard
+                          bus={bus}
+                          index={index}
+                          isSelected={selectedBus?.id === bus.id && selectedBus?.serviceId === bus.serviceId}
+                          onSelect={handleSelectBus}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                </AnimatePresence>
               )}
             </motion.div>
           </motion.div>
 
           <motion.button
             onClick={handleConfirm}
-            disabled={!selectedMicro}
-            className={`apple-button w-full py-4 mt-6 font-medium text-lg ${selectedMicro
+            disabled={!selectedBus}
+            className={`apple-button w-full py-4 mt-6 font-medium text-lg ${selectedBus
               ? "bg-black text-white hover:bg-white hover:text-black hover:border-2 hover:border-black hover:shadow-lg"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
               } transition-colors`}
             whileTap={{
-              scale: selectedMicro ? 0.98 : 1,
+              scale: selectedBus ? 0.98 : 1,
             }}
           >
             Confirmar

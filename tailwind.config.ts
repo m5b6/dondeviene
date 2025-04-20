@@ -73,6 +73,7 @@ const config: Config = {
           '"Helvetica Neue"',
           "sans-serif",
         ],
+        'barlow': ['var(--font-barlow-condensed)', 'sans-serif'],
       },
       boxShadow: {
         apple: "0 4px 30px rgba(0, 0, 0, 0.1)",
