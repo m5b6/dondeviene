@@ -8,9 +8,10 @@ interface ActivarAlertasProps {
   paradero: string
   destino: string
   onComplete: () => void
+  onBack: () => void
 }
 
-export default function ActivarAlertas({ paradero, destino, onComplete }: ActivarAlertasProps) {
+export default function ActivarAlertas({ paradero, destino, onComplete, onBack }: ActivarAlertasProps) {
   const [alertasActivadas, setAlertasActivadas] = useState(true)
   const [hasVibrated, setHasVibrated] = useState(false)
 
@@ -59,6 +60,15 @@ export default function ActivarAlertas({ paradero, destino, onComplete }: Activa
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
+      {/* Botón de Volver */}
+      <button
+        onClick={onBack}
+        className="absolute top-4 left-4 z-20 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors flex items-center justify-center w-10 h-10"
+        aria-label="Volver"
+      >
+        <span className="text-black text-xl font-bold">&lt;</span>
+      </button>
+
       {/* Fondo con mapa borroso y efecto parallax */}
       <motion.div
         className="absolute inset-0 filter blur-md"

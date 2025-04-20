@@ -67,6 +67,16 @@ export default function Home() {
     }, 300)
   }
 
+  const handleBack = () => {
+    if (step > 1) {
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setStep(step - 1)
+        setIsTransitioning(false)
+      }, 300)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-off-white text-black">
       <AnimatePresence mode="wait">
@@ -103,7 +113,11 @@ export default function Home() {
             transition={{ duration: 0.3 }}
             className="h-screen"
           >
-            <ConfirmarParadero location={location} onConfirm={handleParaderoConfirm} />
+            <ConfirmarParadero
+              location={location}
+              onConfirm={handleParaderoConfirm}
+              onBack={handleBack}
+            />
           </motion.div>
         )}
 
@@ -116,7 +130,7 @@ export default function Home() {
             transition={{ duration: 0.3 }}
             className="h-screen"
           >
-            <SeleccionarDestino onConfirm={handleDestinationConfirm} />
+            <SeleccionarDestino onConfirm={handleDestinationConfirm} onBack={handleBack} />
           </motion.div>
         )}
 
@@ -129,7 +143,12 @@ export default function Home() {
             transition={{ duration: 0.3 }}
             className="h-screen"
           >
-            <ActivarAlertas paradero={selectedParadero?.id || ""} destino={destination} onComplete={handleComplete} />
+            <ActivarAlertas
+              paradero={selectedParadero?.id || ""}
+              destino={destination}
+              onComplete={handleComplete}
+              onBack={handleBack}
+            />
           </motion.div>
         )}
       </AnimatePresence>

@@ -114,13 +114,14 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
         >
+
           <motion.h1
-            className="text-3xl font-bold text-center mb-4 tracking-tight flex items-center justify-center"
+            className="text-3xl font-bold text-center mb-4 tracking-tight flex items-center justify-center whitespace-nowrap"
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <span className="mr-2 text-2xl">📍</span> ¿Podemos usar tu ubicación?
+            ¿Podemos ver<br /> tu ubicación?
           </motion.h1>
 
           <motion.p
@@ -141,7 +142,7 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
             <button
               onClick={handlePermitir}
               disabled={isLoading}
-              className="apple-button w-full py-4 border-2 border-black text-black font-medium text-lg hover:bg-black hover:text-white transition-colors hover:border-accent hover:shadow-lg active:scale-[0.98]"
+              className="apple-button w-full py-4 border-2 border-black text-black font-medium text-lg hover:bg-black hover:text-white transition-colors  hover:shadow-lg active:scale-[0.98]"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -170,13 +171,6 @@ export default function PermitirUbicacion({ onPermission }: PermitirUbicacionPro
               ) : (
                 "Permitir"
               )}
-            </button>
-
-            <button
-              onClick={handleSkip}
-              className="apple-button w-full py-4 text-gray font-medium text-lg hover:text-black transition-colors active:scale-[0.98]"
-            >
-              No ahora
             </button>
           </motion.div>
         </motion.div>

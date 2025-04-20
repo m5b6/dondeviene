@@ -14,14 +14,15 @@ interface MicroRoute {
 
 interface SeleccionarDestinoProps {
   onConfirm: (destino: string) => void
+  onBack: () => void
 }
 
-export default function SeleccionarDestino({ onConfirm }: SeleccionarDestinoProps) {
+export default function SeleccionarDestino({ onConfirm, onBack }: SeleccionarDestinoProps) {
   const [destino, setDestino] = useState("")
   const [sugerencias, setSugerencias] = useState<string[]>([])
   const [isFocused, setIsFocused] = useState(false)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
-  const [mode, setMode] = useState<"input" | "micro">("input")
+  const [mode, setMode] = useState<"input" | "micro">("micro")
   const [microRoutes, setMicroRoutes] = useState<MicroRoute[]>([])
   const [selectedMicro, setSelectedMicro] = useState<MicroRoute | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -77,6 +78,24 @@ export default function SeleccionarDestino({ onConfirm }: SeleccionarDestinoProp
         name: "401",
         destination: "Providencia",
         estimatedArrival: "15 min",
+      },
+      {
+        id: "106",
+        name: "106",
+        destination: "Peñalolén",
+        estimatedArrival: "18 min",
+      },
+      {
+        id: "B02",
+        name: "B02",
+        destination: "Mapocho",
+        estimatedArrival: "20 min",
+      },
+      {
+        id: "303",
+        name: "303",
+        destination: "Quilicura",
+        estimatedArrival: "25 min",
       },
     ]
     setMicroRoutes(mockMicroRoutes)
@@ -180,7 +199,16 @@ export default function SeleccionarDestino({ onConfirm }: SeleccionarDestinoProp
   }, [])
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="h-screen w-full flex flex-col relative" ref={containerRef}>
+      {/* Botón de Volver */}
+      <button
+        onClick={onBack}
+        className="absolute top-4 left-4 z-20 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors flex items-center justify-center w-10 h-10"
+        aria-label="Volver"
+      >
+        <span className="text-black text-xl font-bold">&lt;</span>
+      </button>
+
       {/* Fondo con mapa borroso y efecto parallax */}
       <motion.div
         className="absolute inset-0 filter blur-md"
@@ -203,7 +231,6 @@ export default function SeleccionarDestino({ onConfirm }: SeleccionarDestinoProp
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        ref={containerRef}
       >
         <motion.div
           className="w-full max-w-md vision-card p-6"
@@ -220,24 +247,26 @@ export default function SeleccionarDestino({ onConfirm }: SeleccionarDestinoProp
             <span className="mr-2 text-2xl">🔍</span> Seleccionar Destino
           </motion.h2>
 
-          {/* Segmented Control para cambiar de modo */}
           <motion.div
-            className="segmented-control mb-6"
+            className="segmented-control mb-6 border-radius-lg"
+            style={{
+              borderRadius: "18px",
+            }}
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.4 }}
           >
             <button
-              className={`segmented-control-option ${mode === "input" ? "active" : ""}`}
-              onClick={() => handleModeChange("input")}
-            >
-              Buscar destino
-            </button>
-            <button
               className={`segmented-control-option ${mode === "micro" ? "active" : ""}`}
               onClick={() => handleModeChange("micro")}
             >
               Seleccionar micro
+            </button>
+            <button
+              className={`segmented-control-option ${mode === "input" ? "active" : ""}`}
+              onClick={() => handleModeChange("input")}
+            >
+              Buscar destino
             </button>
           </motion.div>
 
@@ -249,9 +278,11 @@ export default function SeleccionarDestino({ onConfirm }: SeleccionarDestinoProp
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="relative"
+                className="relative h-[360px] overflow-y-auto pr-1"
               >
-                <div className={`relative transition-all duration-300 ${isFocused ? "scale-[1.02]" : ""}`}>
+                <div
+                  className={`relative transition-all duration-300 scale-[0.97] ${isFocused ? "scale-[1]" : ""}`}
+                >
                   <input
                     ref={inputRef}
                     type="text"
@@ -301,7 +332,7 @@ export default function SeleccionarDestino({ onConfirm }: SeleccionarDestinoProp
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="relative max-h-[50vh] overflow-y-auto pr-1"
+                className="relative h-[360px] overflow-y-auto pr-1"
               >
                 <div className="space-y-3">
                   {microRoutes.map((micro, index) => (
@@ -332,11 +363,10 @@ export default function SeleccionarDestino({ onConfirm }: SeleccionarDestinoProp
           <motion.button
             onClick={handleConfirm}
             disabled={(mode === "input" && !destino.trim()) || (mode === "micro" && !selectedMicro)}
-            className={`apple-button w-full py-4 mt-6 font-medium text-lg ${
-              (mode === "input" && destino.trim()) || (mode === "micro" && selectedMicro)
-                ? "bg-black text-white hover:bg-white hover:text-black hover:border-2 hover:border-black hover:shadow-lg"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            } transition-colors`}
+            className={`apple-button w-full py-4 mt-6 font-medium text-lg ${(mode === "input" && destino.trim()) || (mode === "micro" && selectedMicro)
+              ? "bg-black text-white hover:bg-white hover:text-black hover:border-2 hover:border-black hover:shadow-lg"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              } transition-colors`}
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.5 }}

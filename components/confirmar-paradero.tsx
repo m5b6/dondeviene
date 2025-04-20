@@ -12,9 +12,10 @@ interface ParaderoInfo {
 interface ConfirmarParaderoProps {
   location: GeolocationPosition | null
   onConfirm: (paradero: ParaderoInfo) => void
+  onBack: () => void
 }
 
-export default function ConfirmarParadero({ location, onConfirm }: ConfirmarParaderoProps) {
+export default function ConfirmarParadero({ location, onConfirm, onBack }: ConfirmarParaderoProps) {
   // Simulación de paraderos cercanos
   const [paraderos, setParaderos] = useState<ParaderoInfo[]>([])
   const [selectedParadero, setSelectedParadero] = useState<ParaderoInfo | null>(null)
@@ -62,7 +63,16 @@ export default function ConfirmarParadero({ location, onConfirm }: ConfirmarPara
   }
 
   return (
-    <div className="h-screen w-full flex flex-col">
+    <div className="h-screen w-full flex flex-col relative">
+      {/* Botón de Volver */}
+      <button
+        onClick={onBack}
+        className="absolute top-4 left-4 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors flex items-center justify-center w-10 h-10"
+        aria-label="Volver"
+      >
+        <span className="text-black text-xl font-bold">&lt;</span>
+      </button>
+
       {/* Mapa en escala de grises */}
       <div className="flex-1 grayscale">
         <MapPlaceholder />
@@ -128,10 +138,10 @@ export default function ConfirmarParadero({ location, onConfirm }: ConfirmarPara
         <motion.button
           onClick={handleConfirm}
           disabled={!selectedParadero || isLoading}
-          className={`apple-button w-full py-4 mt-6 font-medium text-lg transition-all ${
+          className={`apple-button w-full py-4 mt-6 font-medium text-lg transition-all border-1 ${
             !selectedParadero || isLoading
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-black text-white hover:bg-white hover:text-black hover:border-2 hover:border-black hover:shadow-lg active:scale-[0.98]"
+              : "bg-black text-white hover:bg-white hover:text-black hover:border-black hover:shadow-lg"
           }`}
           whileTap={{ scale: !selectedParadero || isLoading ? 1 : 0.98 }}
         >
