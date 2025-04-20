@@ -4,16 +4,24 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface ReloadIndicatorProps {
-  onReload: () => void
+  onReload: (data?: any) => void
   reloadInterval: number
+  fetchData: () => Promise<any>
 }
 
-export default function ReloadIndicator({ onReload, reloadInterval = 5000 }: ReloadIndicatorProps) {
+export default function ReloadIndicator({ 
+  onReload, 
+  reloadInterval = 5000, 
+  fetchData 
+}: ReloadIndicatorProps) {
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const animationRef = useRef<number | null>(null)
   const lastTimestampRef = useRef<number>(0)
   const elapsedTimeRef = useRef<number>(0)
+  const pendingDataRef = useRef<any>(null)
+  const isFetchingRef = useRef<boolean>(false)
+  const fetchStartedAtRef = useRef<number>(0)
 
   useEffect(() => {
     let animationFrameId: number;
@@ -32,8 +40,26 @@ export default function ReloadIndicator({ onReload, reloadInterval = 5000 }: Rel
         
         setProgress(newProgress > 1 ? 1 : newProgress);
         
+        // Start fetching at 50% progress
+        if (newProgress >= 0.5 && !isFetchingRef.current) {
+          isFetchingRef.current = true;
+          fetchStartedAtRef.current = elapsedTimeRef.current;
+          
+          fetchData().then(data => {
+            pendingDataRef.current = data;
+            // Do NOT process the data yet - just store it for later
+          }).catch(err => {
+            console.error("Error fetching data:", err);
+            pendingDataRef.current = null;
+          });
+        }
+        
+        // Only apply the data when the circle completes, regardless of when fetch finishes
         if (elapsedTimeRef.current >= reloadInterval) {
-          onReload();
+          // Pass the fetched data to onReload at the exact moment the circle completes
+          onReload(pendingDataRef.current);
+          isFetchingRef.current = false;
+          pendingDataRef.current = null;
           elapsedTimeRef.current = 0;
           setProgress(0);
         }
@@ -53,7 +79,7 @@ export default function ReloadIndicator({ onReload, reloadInterval = 5000 }: Rel
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isPaused, onReload, reloadInterval]);
+  }, [isPaused, onReload, reloadInterval, fetchData]);
 
   const togglePause = () => {
     setIsPaused(!isPaused)

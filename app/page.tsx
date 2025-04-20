@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import AskLocationOrParadero, { LocationResult } from "@/components/askLocationOrParadero"
 import ConfirmarParadero from "@/components/busStops"
 import SeleccionarDestino from "@/components/selectBus"
-import ActivarAlertas from "@/components/activar-alertas"
+import ActivarAlertas from "@/components/activarAlertas"
 import { AnimatePresence, motion } from "framer-motion"
 import Logo from "@/components/Logo"
 

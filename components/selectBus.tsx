@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import MapPlaceholder from "./mapLoading"
 import ReloadIndicator from "./ReloadIndicator"
 import BackButton from "./BackButton"
+import BusCard, { MicroRoute, Bus } from "./BusCard"
 
 // Define animation variants
 const cardVariants = {
@@ -31,13 +32,6 @@ const itemVariants = {
   },
 }
 
-interface Bus {
-  id: string
-  meters_distance: number
-  min_arrival_time: number
-  max_arrival_time: number
-}
-
 interface Service {
   id: string
   valid: boolean
@@ -51,16 +45,6 @@ interface BusStop {
   status_code: number
   status_description: string
   services: Service[]
-}
-
-interface MicroRoute {
-  id: string
-  name: string
-  destination: string
-  estimatedArrival: string
-  valid: boolean
-  status: string
-  buses: Bus[]
 }
 
 interface SeleccionarDestinoProps {
@@ -80,65 +64,97 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Fetch real bus data from API
-  const fetchBusData = async () => {
-    setIsLoading(true)
-    setError(null)
+  const fetchBusData = async (prefetchedData?: any) => {
+    // If we already have data from a previous fetch, use it and update the UI
+    if (prefetchedData) {
+      const data: BusStop = prefetchedData;
+      processBusData(data);
+      return data;
+    }
+    
+    // Otherwise, just fetch the data but don't process it yet
+    // (The UI update will happen when the circle completes)
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch(`https://api.xor.cl/red/bus-stop/${busStopId}`)
+      const response = await fetch(`https://api.xor.cl/red/bus-stop/${busStopId}`);
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.status} - ${response.statusText}`)
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
 
-      const data: BusStop = await response.json()
-      setBusStopInfo(data)
-
-      // Transform the API data to our component structure
-      const transformedRoutes: MicroRoute[] = data.services.map(service => {
-        // Extract the first bus arrival time (if any)
-        const firstBus = service.buses[0]
-        let estimatedArrival = "No disponible"
-
-        if (service.valid && firstBus) {
-          if (firstBus.min_arrival_time === 0) {
-            estimatedArrival = "Llegando"
-          } else {
-            estimatedArrival = `${firstBus.min_arrival_time}-${firstBus.max_arrival_time} min`
-          }
-        }
-
-        return {
-          id: service.id,
-          name: service.id,
-          destination: service.valid ? "En servicio" : "Fuera de servicio",
-          estimatedArrival,
-          valid: service.valid,
-          status: service.status_description,
-          buses: service.buses
-        }
-      })
-
-      transformedRoutes.sort((a, b) => {
-        if (a.valid !== b.valid) return a.valid ? -1 : 1
-
-        if (a.valid && b.valid) {
-          const aTime = a.buses[0]?.min_arrival_time ?? Infinity
-          const bTime = b.buses[0]?.min_arrival_time ?? Infinity
-          return aTime - bTime
-        }
-
-        return 0
-      })
-
-      setMicroRoutes(transformedRoutes)
+      const data: BusStop = await response.json();
+      // Don't process the data here, just return it
+      // The ReloadIndicator will pass it back to us when the circle completes
+      setIsLoading(false);
+      return data;
     } catch (err) {
-      console.error("Error fetching bus data:", err)
-      setError("No se pudo obtener información de buses. Intente nuevamente.")
-    } finally {
-      setIsLoading(false)
+      console.error("Error fetching bus data:", err);
+      setError("No se pudo obtener información de buses. Intente nuevamente.");
+      setIsLoading(false);
+      return null;
     }
-  }
+  };
+
+  // Process the bus data and update state
+  const processBusData = (data: BusStop) => {
+    setBusStopInfo(data);
+
+    // Keep track of previous values for animation
+    const prevRoutesMap = microRoutes.reduce((acc, route) => {
+      acc[route.id] = {
+        distance: route.buses[0]?.meters_distance,
+        minTime: route.buses[0]?.min_arrival_time
+      };
+      return acc;
+    }, {} as Record<string, { distance?: number, minTime?: number }>);
+
+    // Transform the API data to our component structure
+    const transformedRoutes: MicroRoute[] = data.services.map(service => {
+      // Extract the first bus arrival time (if any)
+      const firstBus = service.buses[0];
+      let estimatedArrival = "No disponible";
+
+      if (service.valid && firstBus) {
+        if (firstBus.min_arrival_time === 0) {
+          estimatedArrival = "Llegando";
+        } else {
+          estimatedArrival = `${firstBus.min_arrival_time}-${firstBus.max_arrival_time} min`;
+        }
+      }
+
+      // Add previous values for animations
+      const prevValues = prevRoutesMap[service.id] || {};
+
+      return {
+        id: service.id,
+        name: service.id,
+        destination: service.valid ? "En servicio" : "Fuera de servicio",
+        estimatedArrival,
+        valid: service.valid,
+        status: service.status_description,
+        buses: service.buses,
+        previousDistance: prevValues.distance,
+        previousMinTime: prevValues.minTime
+      };
+    });
+
+    transformedRoutes.sort((a, b) => {
+      if (a.valid !== b.valid) return a.valid ? -1 : 1;
+
+      if (a.valid && b.valid) {
+        const aTime = a.buses[0]?.min_arrival_time ?? Infinity;
+        const bTime = b.buses[0]?.min_arrival_time ?? Infinity;
+        return aTime - bTime;
+      }
+
+      return 0;
+    });
+
+    setMicroRoutes(transformedRoutes);
+    setIsLoading(false);
+  };
 
   // Initial fetch
   useEffect(() => {
@@ -182,15 +198,6 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
         navigator.vibrate(15)
       }
       onConfirm(destino)
-    }
-  }
-
-  // Calculate distance text
-  const formatDistance = (meters: number): string => {
-    if (meters < 1000) {
-      return `${meters}m`
-    } else {
-      return `${(meters / 1000).toFixed(1)}km`
     }
   }
 
@@ -257,7 +264,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
         >
           {/* Reload indicator */}
           <div className="absolute top-2 right-2">
-            <ReloadIndicator onReload={fetchBusData} reloadInterval={5000} />
+            <ReloadIndicator onReload={fetchBusData} reloadInterval={5000} fetchData={fetchBusData} />
           </div>
 
           <motion.div className="mb-6 h-[90px]" variants={itemVariants}>
@@ -306,62 +313,15 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {microRoutes.map((micro, index) => {
-                    const isSelected = selectedMicro?.id === micro.id
-                    return (
-                      <motion.div
-                        key={micro.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className={`${!micro.valid ? "opacity-60" : ""} flex items-center justify-between p-4 rounded-xl cursor-pointer transition-colors duration-150 ${isSelected
-                          ? "bg-black text-white"
-                          : "bg-white/50 hover:bg-gray-100 shadow-md"
-                          }`}
-                        onClick={() => micro.valid && handleSelectMicro(micro)}
-                        whileTap={{ scale: micro.valid ? 0.98 : 1 }}
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center">
-                            <span className={`text-xl mr-2 ${micro.valid ? "animate-bus-rumble" : "grayscale opacity-60"}`}>🚌</span>
-                            <span className={`font-semibold text-lg ${isSelected ? "text-white" : ""}`}>
-                              {micro.name}
-                            </span>
-                          </div>
-                          <div className={`text-sm mt-1 ${isSelected ? "text-gray-300" : "text-gray-500"}`}>
-                            {micro.status}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          {micro.valid ? (
-                            <>
-                              <div className={`font-medium ${isSelected ? "text-white" : "text-accent"}`}>
-                                {micro.estimatedArrival}
-                              </div>
-                              {micro.buses.length > 0 && (
-                                <div className={`text-xs ${isSelected ? "text-gray-300" : "text-gray-500"}`}>
-                                  {formatDistance(micro.buses[0].meters_distance)}
-                                </div>
-                              )}
-                              <div className="flex items-center justify-end mt-1">
-                                <span className="relative flex h-2 w-2 mr-1">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                </span>
-                                <span className={`text-xs font-medium ${isSelected ? "text-green-300" : "text-green-600"}`}>
-                                  en vivo
-                                </span>
-                              </div>
-                            </>
-                          ) : (
-                            <div className={`text-sm font-medium ${isSelected ? "text-white" : "text-gray-500"}`}>
-                              No disponible
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )
-                  })}
+                  {microRoutes.map((micro, index) => (
+                    <BusCard
+                      key={micro.id}
+                      micro={micro}
+                      index={index}
+                      isSelected={selectedMicro?.id === micro.id}
+                      onSelect={handleSelectMicro}
+                    />
+                  ))}
                 </div>
               )}
             </motion.div>
