@@ -96,9 +96,15 @@ export default function AskLocationOrParadero({
     setView("paradero");
   };
 
+  // DIRECT ROUTE: Bypass all steps and send paradero code directly to parent
+  const handleDirectConfirm = (paraderoCode: string) => {
+    // This bypasses all intermediate steps and goes to selectBus.tsx
+    onResult({ type: "paradero", paradero: paraderoCode });
+  };
+
   return (
     <CardLayout>
-      <div className="relative h-[465px]">
+      <div className="relative h-global">
         <AnimatePresence mode="wait" initial={false}>
           {view === "location" ? (
             <motion.div 
@@ -129,6 +135,7 @@ export default function AskLocationOrParadero({
                 onBack={handleBack}
                 userLocation={userPosition}
                 forceManualMode={forceManualMode}
+                onDirectConfirm={handleDirectConfirm}
               />
             </motion.div>
           )}

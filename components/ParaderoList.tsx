@@ -13,7 +13,7 @@ interface ParaderoListProps {
 
 // Animation variants for list items
 const listItemVariants = {
-    hidden: { 
+    hidden: {
         opacity: 0,
         y: 20
     },
@@ -151,21 +151,19 @@ export default function ParaderoList({
         return `${(meters / 1000).toFixed(1)}km`;
     };
 
-    // Determine whether to show location-based or manual search
     const showLocationSearch = !!userLocation && !forceManualMode;
 
     return (
         <div className="flex flex-col h-full">
-            {/* Header area */}
             <div>
-                <h1 className="text-3xl font-bold text-center mb-4 tracking-tight flex items-center justify-center whitespace-nowrap">
+                <h1 className="text-3xl font-bold text-center mb-3 tracking-tight flex items-center justify-center whitespace-nowrap">
                     {showLocationSearch ?
-                        "Paraderos cercanos" :
-                        <><span>Todos los paraderos</span></>
+                        "Paraderos cerca de ti" :
+                        "Todos los paraderos"
                     }
                 </h1>
 
-                <p className="text-xl text-center mb-8 text-gray font-light">
+                <p className="text-xl text-center mb-6 text-gray font-light">
                     Selecciona un paradero
                 </p>
             </div>
@@ -181,12 +179,12 @@ export default function ParaderoList({
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder={"🔍 PC123, PA111..."}
-                            className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-black focus:outline-none focus:ring-0"
+                            className="w-full p-3 border-radius-global border-2 border-gray-200 rounded-xl focus:border-black focus:outline-none focus:ring-0"
                         />
                         {search && (
                             <button
                                 onClick={() => setSearch("")}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black"
+                                className="absolute right-3 border-radius-global top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black"
                             >
                                 ✕
                             </button>
@@ -207,7 +205,7 @@ export default function ParaderoList({
                     )}
 
                     {/* Paradero list container */}
-                    <div className="flex-1 overflow-y-auto border-2 border-gray-200 rounded-xl min-h-0">
+                    <div className="flex-1 overflow-y-auto border-radius-global border-2 border-gray-200 rounded-xl mb-3 min-h-0">
                         {/* Loading states */}
                         {((loading && !showLocationSearch) || (nearbyLoading && showLocationSearch)) ? (
                             <div className="h-full flex justify-center items-center py-8">

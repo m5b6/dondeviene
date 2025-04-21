@@ -49,13 +49,15 @@ interface AskParaderoProps {
   onBack: () => void;
   userLocation?: GeolocationPosition | null;
   forceManualMode?: boolean;
+  onDirectConfirm?: (paraderoCode: string) => void;
 }
 
 export default function AskParadero({ 
   onParaderoSelected, 
   onBack, 
   userLocation,
-  forceManualMode = false
+  forceManualMode = false,
+  onDirectConfirm
 }: AskParaderoProps) {
   const [showMap, setShowMap] = useState(false);
   const [selectedParadero, setSelectedParadero] = useState<string | null>(null);
@@ -70,6 +72,8 @@ export default function AskParadero({
     }
     
     setSelectedParadero(paradero);
+    
+    // No direct skipping from list selection - always show map first
     setShowMap(true);
   };
 
@@ -79,11 +83,16 @@ export default function AskParadero({
   };
 
   const handleConfirmParadero = (paradero: string) => {
-    onParaderoSelected(paradero);
+    // DIRECT ROUTE: Skip busStops.tsx completely
+    if (onDirectConfirm) {
+      onDirectConfirm(paradero);
+    } else {
+      onParaderoSelected(paradero);
+    }
   };
 
   return (
-    <div className="h-[465px]">
+    <div className="h-global">
       <AnimatePresence mode="wait">
         {!showMap ? (
           <motion.div
@@ -115,6 +124,7 @@ export default function AskParadero({
               userLocation={userLocation || null}
               onClose={handleCloseMap}
               onConfirm={handleConfirmParadero}
+              onDirectConfirm={onDirectConfirm}
             />
           </motion.div>
         )}

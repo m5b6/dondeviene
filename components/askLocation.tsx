@@ -118,16 +118,16 @@ export default function AskLocation({
       animate="enter"
       exit="exit"
       variants={contentVariants}
-      className="flex flex-col h-[465px] justify-between"
+      className="flex flex-col h-global justify-between"
     >
       {/* Header area */}
       <div>
         <h1 className="text-3xl font-bold text-center mb-4 tracking-tight flex items-center justify-center whitespace-nowrap">
-          ¿Podemos ver<br /> tu ubicación?
+          Comparte tu ubicación
         </h1>
 
         <p className="text-xl text-center mb-8 text-gray font-light">
-          Para mostrarte tus paraderos más cercanos
+          Para mostrarte paraderos cercanos
         </p>
       </div>
 

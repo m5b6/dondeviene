@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import AskLocationOrParadero, { LocationResult } from "@/components/askLocationOrParadero"
-import ConfirmarParadero from "@/components/busStops"
 import SeleccionarDestino from "@/components/selectBus"
 import ActivarAlertas from "@/components/activarAlertas"
 import { AnimatePresence, motion } from "framer-motion"
@@ -55,6 +54,28 @@ export default function Home() {
       setIsTransitioning(false)
     }, 300)
   }
+
+  // DIRECT ROUTE FROM PARADERO MAP TO SELECT BUS - SKIPS STEP 2 COMPLETELY
+  const handleParaderoMapConfirm = (paraderoCode: string) => {
+    // Create a simple paradero info object with just the code
+    const simpleParadero: SelectedParaderoInfo = {
+      id: 0,
+      cod: paraderoCode,
+      name: `Paradero ${paraderoCode}`,
+      distance: 0,
+      pos: [0, 0]
+    };
+    
+    // Save the paradero and go DIRECTLY to step 3 (selectBus.tsx)
+    setSelectedParadero(simpleParadero);
+    setIsTransitioning(true);
+    
+    // Skip to step 3 (selectBus.tsx)
+    setTimeout(() => {
+      setStep(3);
+      setIsTransitioning(false);
+    }, 300);
+  };
 
   const handleDestinationConfirm = (dest: string) => {
     setIsTransitioning(true)
@@ -131,25 +152,8 @@ export default function Home() {
           </motion.div>
         )}
 
-        {step === 2 && (
-          <motion.div
-            key="step2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="h-screen"
-          >
-            <ConfirmarParadero
-              location={location}
-              manualParaderoCode={manualParaderoCode}
-              onConfirm={handleParaderoConfirm}
-              onBack={handleBack}
-            />
-          </motion.div>
-        )}
 
-        {step === 3 && (
+        {step === 2 && (
           <motion.div
             key="step3"
             initial={{ opacity: 0 }}
@@ -162,7 +166,7 @@ export default function Home() {
           </motion.div>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <motion.div
             key="step4"
             initial={{ opacity: 0 }}
