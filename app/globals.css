@@ -261,10 +261,24 @@ button {
   border-radius: 30px !important;
 }
 
+.border-radius-global-top {
+  border-top-left-radius: 30px !important;
+  border-top-right-radius: 30px !important;
+}
+
+.border-radius-global-bottom {
+  border-bottom-left-radius: 30px !important;
+  border-bottom-right-radius: 30px !important;
+}
+
 .mapboxgl-ctrl-logo {
   display: none !important;
 }
 
 .mapbox-logo{
   display: none !important;
+}
+
+.font-xxs {
+  font-size: 0.65rem !important;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from 'react';
-import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox';
+import Map, { Marker, Source, Layer, ViewStateChangeEvent, ViewState } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { ParaderoInfo } from "../lib/fetch-paraderos";
 import { useEffect, useState } from 'react';
@@ -96,35 +96,94 @@ export default function MapaParaderos({
   const [isRouteFetching, setIsRouteFetching] = useState(false);
   const [centerCoordinates, setCenterCoordinates] = useState<[number, number] | null>(null);
   const [formattedDistance, setFormattedDistance] = useState<string>('');
+  const [viewState, setViewState] = useState<Partial<ViewState>>({
+    longitude: selectedParadero?.pos[1] || -70.67,
+    latitude: selectedParadero?.pos[0] || -33.45,
+    zoom: 15,
+    bearing: 0,
+    pitch: 0
+  });
 
-  // Fit bounds when paradero is selected
+  // Fit bounds when paradero is selected or user location changes
   useEffect(() => {
-    if (!mapRef.current || !selectedParadero) {
+    if (!selectedParadero) {
       return;
     }
 
-    if (userLocation) {
-      // If we have user location, fit bounds to show both markers
-      try {
-        const bounds = [
-          [Math.min(userLocation.longitude, selectedParadero.pos[1]), Math.min(userLocation.latitude, selectedParadero.pos[0])],
-          [Math.max(userLocation.longitude, selectedParadero.pos[1]), Math.max(userLocation.latitude, selectedParadero.pos[0])]
-        ];
-        mapRef.current.fitBounds(bounds, {
-          padding: { top: 80, bottom: 80, left: 80, right: 80 },
-          duration: 1000
+    // Wait for the map to be ready
+    setTimeout(() => {
+      if (userLocation) {
+        try {
+          // If we have both user location and paradero, calculate the center and zoom
+          const lng1 = userLocation.longitude;
+          const lat1 = userLocation.latitude;
+          const lng2 = selectedParadero.pos[1];
+          const lat2 = selectedParadero.pos[0];
+          
+          // Calculate center
+          const centerLng = (lng1 + lng2) / 2;
+          const centerLat = (lat1 + lat2) / 2;
+          
+          // Calculate distance between points
+          const distance = calculateDistance(lng1, lat1, lng2, lat2);
+          
+          // Calculate appropriate zoom level based on distance
+          // Smaller distances = higher zoom
+          let zoom = 15; // default zoom
+          
+          if (distance < 100) {
+            zoom = 17;
+          } else if (distance < 500) {
+            zoom = 16;
+          } else if (distance < 2000) {
+            zoom = 15;
+          } else if (distance < 5000) {
+            zoom = 14;
+          } else if (distance < 10000) {
+            zoom = 13;
+          } else {
+            zoom = 12;
+          }
+          
+          // Set the view state directly
+          setViewState({
+            longitude: centerLng,
+            latitude: centerLat,
+            zoom: zoom,
+            bearing: 0,
+            pitch: 0
+          });
+          
+          // Use the map reference for animation
+          if (mapRef.current) {
+            mapRef.current.flyTo({
+              center: [centerLng, centerLat],
+              zoom: zoom,
+              duration: 1000
+            });
+          }
+          
+        } catch (err) {
+          console.error('Error calculating bounds:', err);
+        }
+      } else {
+        // If we only have the paradero, zoom in closer to it
+        setViewState({
+          longitude: selectedParadero.pos[1],
+          latitude: selectedParadero.pos[0],
+          zoom: 17
         });
-      } catch (err) {
-        console.error('Error fitting bounds:', err);
+        
+        // Use the map reference for animation
+        if (mapRef.current) {
+          mapRef.current.flyTo({
+            center: [selectedParadero.pos[1], selectedParadero.pos[0]],
+            zoom: 17,
+            duration: 1000
+          });
+        }
       }
-    } else {
-      // If we only have the paradero, zoom in closer to it
-      mapRef.current.flyTo({
-        center: [selectedParadero.pos[1], selectedParadero.pos[0]],
-        zoom: 17,
-        duration: 1000
-      });
-    }
+    }, 300);
   }, [selectedParadero?.pos[0], selectedParadero?.pos[1], userLocation?.latitude, userLocation?.longitude]);
 
   useEffect(() => {
@@ -189,18 +248,13 @@ export default function MapaParaderos({
   return (
     <div className="h-full w-full relative border-radius-global ">
       <Map
-
         ref={mapRef}
         attributionControl={false}
-
         mapboxAccessToken={PUBLIC_MAPBOX_TOKEN}
-        initialViewState={{
-          longitude: selectedParadero?.pos[1] || -70.67,
-          latitude: selectedParadero?.pos[0] || -33.45,
-          zoom: userLocation ? 15 : 17
-        }}
+        {...viewState}
         style={{ width: "100%", height: "100%", borderRadius: "30px" }}
         mapStyle="mapbox://styles/mapbox/dark-v11"
+        onMove={evt => setViewState(evt.viewState)}
       >
         {/* Route line between user and paradero using actual streets */}
         {routeData && (
@@ -221,10 +275,8 @@ export default function MapaParaderos({
             latitude={centerCoordinates[1]}
             anchor="center"
           >
-            <div className="bg-blue-900 text-white px-1 py-1 rounded shadow-lg font-mono text-xs"
-              style={{
-                fontSize: '0.5rem !important'
-              }}
+            <div className="bg-blue-900 text-white px-1 rounded shadow-lg font-mono font-bold font-xxs"
+
             >
               {formattedDistance}
             </div>
@@ -248,7 +300,7 @@ export default function MapaParaderos({
             latitude={selectedParadero.pos[0]}
           >
             <div className="flex flex-col items-center justify-center animate-marker-bounce">
-              <div className="bg-white text-black px-1 py-1 mb-1 rounded shadow-lg font-mono font-bold text-xs">
+              <div className="bg-white text-black px-1 py-1 mb-1 rounded shadow-lg  font-bold text-xs">
                 {selectedParadero.cod}
               </div>
               <div

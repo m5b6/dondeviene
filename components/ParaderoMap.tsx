@@ -498,8 +498,8 @@ export default function ParaderoMap({
                                 </div>
 
                                 {/* Bus chips overlay - floating on top of the map */}
-                                <div className="absolute top-2 left-0 right-0 z-10 px-3">
-                                    <div className="p-2 bg-transparent">
+                                <div className="absolute top-0 z-10 w-full">
+                                    <div className="p-3 w-full bg-black  border-radius-global-top">
                                         {selectedParaderoInfo?.buses && selectedParaderoInfo.buses.length > 0 ? (
                                             <div className="flex flex-wrap gap-1.5 justify-center">
                                                 {/* Use a Set to filter unique service IDs */}
@@ -511,7 +511,7 @@ export default function ParaderoMap({
                                                     return (
                                                         <div key={serviceId} className="relative group">
                                                             <div
-                                                                className="px-1.5 py-0.5 rounded-full text-white text-xs font-mono font-bold shadow-sm cursor-pointer transition-transform hover:scale-105"
+                                                                className="px-1.5 py-0.5 rounded-full text-white text-xs  font-bold shadow-sm cursor-pointer transition-transform hover:scale-105 "
                                                                 style={{ backgroundColor: bus.color }}
                                                             >
                                                                 {bus.service}
@@ -543,7 +543,7 @@ export default function ParaderoMap({
                                     onClick={handleConfirm}
                                     className="apple-button w-full py-3 bg-black text-white text-sm font-medium rounded-xl hover:bg-gray-800 transition-colors"
                                 >
-                                    Confirmar
+                                    Ver buses
                                 </button>
                             </div>
                         </div>
