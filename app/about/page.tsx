@@ -38,31 +38,27 @@ export default function About() {
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.5, delay: 0.3 }}
                     >
-                        <p>
-                            Este proyecto comenzó cuando me di cuenta de un problema para los chilenos:
+
+                        <p className='text-justify'>
+                            La única opción para saber cuándo viene la micro es usar <a href="https://red.cl" target="_blank" rel="noopener noreferrer" className="text-black font-bold underline hover:opacity-70 transition-opacity">red.cl</a>, o la app red, ambas muy incómodas de usar.
                         </p>
-                        <p>
-                            La única opción para saber cuándo viene la micro es usar <a href="https://red.cl" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">red.cl</a>, o la app red, ambas muy incomodas de usar.
+                        <p className='text-justify'>
+                            <a href="https://dondeviene.cl" target="_blank" rel="noopener noreferrer" className="text-black font-bold underline hover:opacity-70 transition-opacity">dondeviene.cl</a> está hecho para ser extremadamente fácil de usar.
                         </p>
-                        <p>
-                            <a href="https://dondeviene.cl" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 transition-colors underline">dondeviene.cl</a> está diseñado para ser extremadamente fácil de usar.
-                        </p>
-                        <p>
+                        <p className='text-justify'>
                             Si tienes sugerencias <a 
-                            className="text-blue-600 hover:text-blue-800 transition-colors underline" 
+                            className="text-black font-bold underline hover:opacity-70 transition-opacity" 
                             href="https://wa.me/56995411717" target="_blank" rel="noopener noreferrer">escríbeme al +56995411717</a>
                         </p>
 
                         <div className="pt-4 mt-4 border-t border-gray-200">
-                            <p className="text-sm text-gray-500 mb-4">
-                                Este proyecto fue creado como un hack en un fin de semana.
-                            </p>
+
                             <div className="flex justify-center gap-6">
                                 <a
                                     href="https://matiasberrios.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 transition-colors underline"
+                                    className="text-black font-bold underline hover:opacity-70 transition-opacity"
                                 >
                                     matiasberrios.com
                                 </a>
@@ -70,7 +66,7 @@ export default function About() {
                                     href="https://vita.lat"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 transition-colors underline"
+                                    className="text-black font-bold underline hover:opacity-70 transition-opacity"
                                 >
                                     vita.lat
                                 </a>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import dynamic from 'next/dynamic'
-import { fetchParaderoByCode, ParaderoInfo } from '../lib/fetch-paraderos'
+import { fetchParaderoByCode, ParaderoInfo, BusArrival } from '../lib/fetch-paraderos'
 import BackButton from "./BackButton"
 import SeleccionarDestino from "./selectBus"
 import ReloadIndicator from "./ReloadIndicator"
@@ -72,7 +72,7 @@ interface BusStop {
 function SimpleBusSelection({ busStopId, onBack, onConfirm }: BusSelectionProps) {
     const [destino, setDestino] = useState("");
     const [allBuses, setAllBuses] = useState<IndividualBus[]>([]);
-    const [busStopInfo, setBusStopInfo] = useState<BusStop | null>(null);
+    const [busStopInfo, setBusStopInfo] = useState<ParaderoInfo | null>(null);
     const [selectedBus, setSelectedBus] = useState<IndividualBus | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -81,7 +81,7 @@ function SimpleBusSelection({ busStopId, onBack, onConfirm }: BusSelectionProps)
     const fetchBusData = async (prefetchedData?: any) => {
         // If we already have data from a previous fetch, use it and update the UI
         if (prefetchedData) {
-            const data: BusStop = prefetchedData;
+            const data: ParaderoInfo = prefetchedData;
             processBusData(data);
             return data;
         }
@@ -91,13 +91,7 @@ function SimpleBusSelection({ busStopId, onBack, onConfirm }: BusSelectionProps)
         setError(null);
 
         try {
-            const response = await fetch(`https://api.xor.cl/red/bus-stop/${busStopId}`);
-
-            if (!response.ok) {
-                throw new Error(`Error: ${response.status} - ${response.statusText}`);
-            }
-
-            const data: BusStop = await response.json();
+            const data = await fetchParaderoByCode(busStopId);
             setIsLoading(false);
             return data;
         } catch (err) {
@@ -109,7 +103,7 @@ function SimpleBusSelection({ busStopId, onBack, onConfirm }: BusSelectionProps)
     };
 
     // Process the bus data and update state
-    const processBusData = (data: BusStop) => {
+    const processBusData = (data: ParaderoInfo) => {
         setBusStopInfo(data);
 
         // Keep track of previous values for animation
@@ -124,35 +118,67 @@ function SimpleBusSelection({ busStopId, onBack, onConfirm }: BusSelectionProps)
         // Transform the API data to a flat list of all buses
         const transformedBuses: IndividualBus[] = [];
         
-        data.services.forEach(service => {
-            if (service.valid && service.buses.length > 0) {
-                service.buses.forEach(bus => {
-                    // Add previous values for animations
-                    const busKey = `${service.id}-${bus.id}`;
-                    const prevValues = prevBusesMap[busKey] || {};
+        if (data.buses && data.buses.length > 0) {
+            data.buses.forEach(bus => {
+                // Add previous values for animations
+                const busKey = `${bus.service}-${bus.busPlate || 'unknown'}`;
+                const prevValues = prevBusesMap[busKey] || {};
 
-                    transformedBuses.push({
-                        id: bus.id,
-                        serviceId: service.id,
-                        name: service.id,
-                        licensePlate: bus.id,
-                        metersDistance: bus.meters_distance,
-                        minArrivalTime: bus.min_arrival_time,
-                        maxArrivalTime: bus.max_arrival_time,
-                        status: service.status_description,
-                        valid: service.valid,
-                        estimatedArrival: bus.min_arrival_time === 0 
-                            ? "Llegando" 
-                            : `${bus.min_arrival_time}-${bus.max_arrival_time} min`,
-                        previousDistance: prevValues.distance,
-                        previousMinTime: prevValues.minTime
-                    });
+                // Extract minutes from timeToArrival
+                let minArrivalTime = 0;
+                let maxArrivalTime = 0;
+                
+                if (bus.timeToArrival === "Llegando") {
+                    minArrivalTime = 0;
+                    maxArrivalTime = 0;
+                } else {
+                    const timeMatch = bus.timeToArrival.match(/(\d+)/);
+                    if (timeMatch) {
+                        minArrivalTime = parseInt(timeMatch[1]);
+                        maxArrivalTime = minArrivalTime + 2; // Add some buffer
+                    }
+                }
+
+                // Convert distance from string to number (meters)
+                let metersDistance = 0;
+                if (bus.distance) {
+                    const distanceMatch = bus.distance.match(/(\d+(\.\d+)?)/);
+                    if (distanceMatch) {
+                        const distanceValue = parseFloat(distanceMatch[1]);
+                        if (bus.distance.includes("km")) {
+                            metersDistance = distanceValue * 1000;
+                        } else {
+                            metersDistance = distanceValue;
+                        }
+                    }
+                }
+
+                transformedBuses.push({
+                    id: bus.busPlate || bus.service,
+                    serviceId: bus.service,
+                    name: bus.service,
+                    licensePlate: bus.busPlate || "",
+                    metersDistance: metersDistance,
+                    minArrivalTime: minArrivalTime,
+                    maxArrivalTime: maxArrivalTime,
+                    status: "En servicio",
+                    valid: true,
+                    estimatedArrival: bus.timeToArrival,
+                    previousDistance: prevValues.distance,
+                    previousMinTime: prevValues.minTime,
+                    color: bus.color
                 });
-            }
-        });
+            });
+        }
 
-        // Sort buses by distance (closest first)
-        transformedBuses.sort((a, b) => a.metersDistance - b.metersDistance);
+        // Sort buses by arrival time (closest first)
+        transformedBuses.sort((a, b) => {
+            // Put "Llegando" first
+            if (a.estimatedArrival === "Llegando" && b.estimatedArrival !== "Llegando") return -1;
+            if (a.estimatedArrival !== "Llegando" && b.estimatedArrival === "Llegando") return 1;
+            // Then by arrival time
+            return a.minArrivalTime - b.minArrivalTime;
+        });
 
         setAllBuses(transformedBuses);
         setIsLoading(false);
@@ -217,7 +243,7 @@ function SimpleBusSelection({ busStopId, onBack, onConfirm }: BusSelectionProps)
                     </h2>
                 </div>
                 {busStopInfo && (
-                    <p className="text-sm text-center text-gray-500">{busStopInfo.id}</p>
+                    <p className="text-sm text-center text-gray-500">{busStopInfo.cod}</p>
                 )}
             </div>
 

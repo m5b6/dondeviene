@@ -121,7 +121,7 @@ export async function fetchParaderoByCode(code: string): Promise<ParaderoInfo> {
               service: item.servicio,
               destination: item.destino,
               timeToArrival: item.horaprediccionbus1 || "Sin información",
-              distance: item.distanciabus1 ? `${Math.round(parseInt(item.distanciabus1) / 1000)}km` : undefined,
+              distance: item.distanciabus1 ? `${(parseInt(item.distanciabus1) / 1000).toFixed(2)}km` : undefined,
               color: item.color,
               busPlate: item.ppubus1 || undefined
             });
@@ -132,7 +132,7 @@ export async function fetchParaderoByCode(code: string): Promise<ParaderoInfo> {
                 service: item.servicio,
                 destination: item.destino,
                 timeToArrival: item.horaprediccionbus2,
-                distance: item.distanciabus2 ? `${Math.round(parseInt(item.distanciabus2) / 1000)}km` : undefined,
+                distance: item.distanciabus2 ? `${(parseInt(item.distanciabus2) / 1000).toFixed(2)}km` : undefined,
                 color: item.color,
                 busPlate: item.ppubus2 || undefined
               });

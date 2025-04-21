@@ -36,6 +36,7 @@ export interface IndividualBus {
   status: string
   previousDistance?: number
   previousMinTime?: number
+  color?: string
 }
 
 // Add a blur transition component for arrival times
@@ -78,28 +79,39 @@ interface BusCardProps {
 }
 
 export default function BusCard({ micro, bus, index, isSelected, onSelect }: BusCardProps) {
-  // Extract numeric part from arrival time
+
   const getArrivalTimeValue = (arrivalTime: string): string => {
-    if (arrivalTime === "Llegando") return arrivalTime
-    const match = arrivalTime.match(/(\d+)-(\d+)/)
-    if (match) return `${match[1]}-${match[2]}`
-    return arrivalTime
+    if (arrivalTime === "Llegando.") return "Llegando";
+    
+    // Try to extract numbers from strings like "Entre 16 Y 22 min." or "Menos de 6 min."
+    const numbers = arrivalTime.match(/\d+/g);
+    
+    if (numbers && numbers.length >= 2) {
+      // If we found at least 2 numbers, return them in the format "X - Y min"
+      return `${parseInt(numbers[0])} - ${parseInt(numbers[1])} min`;
+    } else if (numbers && numbers.length === 1) {
+      // If we found just one number (like in "Menos de 6 min.")
+      return `${numbers[0]} min`;
+    }
+    
+    // If we couldn't parse anything, return the original string
+    return arrivalTime;
   }
 
   // Calculate distance text
   const formatDistance = (meters: number): string => {
     if (meters < 1000) {
-      return `${meters}m`
+      return `${meters.toString().padStart(3, '0')}m`
     } else {
-      return `${(meters / 1000).toFixed(2)}km`
+      return `${(meters / 1000).toFixed(3)}km`
     }
   }
 
   const getDistanceValue = (meters: number): string => {
     if (meters < 1000) {
-      return `${meters}`
+      return `${meters.toString().padStart(3, '0')}`
     } else {
-      return `${(meters / 1000).toFixed(2)}`
+      return `${(meters / 1000).toFixed(3)}`
     }
   }
 
@@ -128,6 +140,7 @@ export default function BusCard({ micro, bus, index, isSelected, onSelect }: Bus
   const estimatedArrival = item.estimatedArrival;
   const name = item.name;
   const status = item.status;
+  const color = bus?.color || "#3B82F6"; // Default to blue if no color provided
 
   const metersDistance = bus ? bus.metersDistance : micro?.buses[0]?.meters_distance;
   const licensePlate = bus ? bus.licensePlate : undefined;
@@ -161,11 +174,10 @@ export default function BusCard({ micro, bus, index, isSelected, onSelect }: Bus
       <div className="flex-1">
         <div className="flex items-center">
           <span className={`text-xl mr-2 ${valid ? "animate-bus-rumble" : "grayscale opacity-60"}`}>🚌</span>
-          <span className={`inline-flex items-center px-2 py-0.4 rounded-md text-sm font-medium ${
-            isSelected 
-              ? "bg-white/20 text-white border border-white/30" 
-              : "bg-blue-50 text-blue-700 border border-blue-100"
-          }`}>
+          <span
+            className={`inline-flex items-center px-2 py-0.4 rounded-md text-sm font-medium text-white`}
+            style={{ backgroundColor: color }}
+          >
             {name}
           </span>
         </div>
@@ -179,25 +191,16 @@ export default function BusCard({ micro, bus, index, isSelected, onSelect }: Bus
             {formattedLicensePlate}
           </div>
         )}
-
       </div>
       <div className="text-right">
         {valid ? (
           <>
             <div className={`font-medium ${isSelected ? "text-white" : "text-accent"} flex items-center justify-end`}>
-              {estimatedArrival === "Llegando" ? (
-                <span>Llegando</span>
-              ) : estimatedArrival.includes("min") ? (
                 <span className="flex items-center">
                   <BlurTransition
                     value={getArrivalTimeValue(estimatedArrival)}
-                    className="font-mono"
                   />
-                  <span className="ml-1">min</span>
                 </span>
-              ) : (
-                <span>{estimatedArrival}</span>
-              )}
             </div>
             {metersDistance !== undefined && (
               <div className={`text-xs ${isSelected ? "text-gray-300" : "text-gray-500"} flex items-center justify-end`}>
