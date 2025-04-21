@@ -33,6 +33,30 @@ const itemVariants = {
   },
 }
 
+// Add slide transition variants
+const slideVariants = {
+  initial: {
+    x: 30,
+    opacity: 0,
+  },
+  animate: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      x: { duration: 0.25 },
+      opacity: { duration: 0.25 }
+    }
+  },
+  exit: {
+    x: 30,
+    opacity: 0,
+    transition: {
+      x: { duration: 0.25 },
+      opacity: { duration: 0.25 }
+    }
+  }
+}
+
 interface Service {
   id: string
   valid: boolean
@@ -54,7 +78,7 @@ interface SeleccionarDestinoProps {
   busStopId: string
 }
 
-export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA433" }: SeleccionarDestinoProps) {
+export default function SelectBus({ onConfirm, onBack, busStopId = "PA433" }: SeleccionarDestinoProps) {
   const [destino, setDestino] = useState("")
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [allBuses, setAllBuses] = useState<IndividualBus[]>([])
@@ -63,6 +87,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
 
   // Fetch real bus data from API
   const fetchBusData = async (prefetchedData?: any) => {
@@ -72,7 +97,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
       processBusData(data);
       return data;
     }
-    
+
     // Otherwise, just fetch the data but don't process it yet
     // (The UI update will happen when the circle completes)
     setIsLoading(true);
@@ -107,7 +132,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
 
     // Transform the API data to a flat list of all buses
     const transformedBuses: IndividualBus[] = [];
-    
+
     if (data.buses && data.buses.length > 0) {
       data.buses.forEach(bus => {
         // Add previous values for animations
@@ -117,7 +142,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
         // Extract minutes from timeToArrival
         let minArrivalTime = 0;
         let maxArrivalTime = 0;
-        
+
         if (bus.timeToArrival === "Llegando") {
           minArrivalTime = 0;
           maxArrivalTime = 0;
@@ -176,8 +201,15 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
 
   // Initial fetch
   useEffect(() => {
-    fetchBusData()
-  }, [busStopId])
+    // Make sure we fetch data when the component mounts or when busStopId changes
+    if (busStopId) {
+      fetchBusData().then(data => {
+        if (data) {
+          processBusData(data);
+        }
+      });
+    }
+  }, [busStopId]);
 
   // Detectar cuando el teclado está visible
   useEffect(() => {
@@ -205,10 +237,10 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
     if ("vibrate" in navigator) {
       navigator.vibrate(10)
     }
-    
+
     // Check if it's an IndividualBus or MicroRoute
     const isIndividualBus = 'serviceId' in bus;
-    
+
     if (isIndividualBus) {
       const individualBus = bus as IndividualBus;
       setSelectedBus(individualBus)
@@ -244,8 +276,6 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
   }
 
   // Efecto de parallax para el fondo
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 10
@@ -271,7 +301,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
   }, [])
 
   return (
-    <div className="h-screen w-full flex flex-col relative" ref={containerRef}>
+    <div className="h-full w-full flex flex-col relative" ref={containerRef}>
       {/* Fondo con mapa borroso y efecto parallax */}
       <motion.div
         className="absolute inset-0 filter blur-md"
@@ -296,10 +326,11 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
         transition={{ duration: 0.3 }}
       >
         <motion.div
-          className="w-full max-w-md vision-card p-6 relative"
-          variants={cardVariants}
-          initial="hidden"
-          animate="visible"
+          className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 relative"
+          variants={slideVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
         >
           {/* Reload indicator */}
           <div className="absolute top-2 right-2">
@@ -310,7 +341,7 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
             <div className="flex items-center mb-2 relative">
               <BackButton onClick={onBack} variant="inside-card" />
               <h2 className="text-2xl font-bold tracking-tight text-center w-full">
-                <span className="mr-2 text-2xl">🚏</span> {busStopInfo?.name || "Cargando paradero..."}
+                {busStopInfo?.name || "Cargando paradero..."}
               </h2>
             </div>
             {busStopInfo && (
@@ -362,11 +393,11 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ 
+                        transition={{
                           type: "spring",
                           stiffness: 500,
                           damping: 30,
-                          duration: 0.5 
+                          duration: 0.5
                         }}
                         layout
                       >

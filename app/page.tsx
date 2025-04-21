@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react"
 import AskLocationOrParadero, { LocationResult } from "@/components/askLocationOrParadero"
-import SeleccionarDestino from "@/components/selectBus"
 import ActivarAlertas from "@/components/activarAlertas"
 import { AnimatePresence, motion } from "framer-motion"
 import Logo from "@/components/Logo"
-
+import SelectBus from "@/components/selectBus"
 interface SelectedParaderoInfo {
   id: number;
   cod: string;
@@ -113,7 +112,7 @@ export default function Home() {
         />
       )}
 
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="wait">
         {step === 1 && (
           <motion.div
             key="step1"
@@ -133,20 +132,20 @@ export default function Home() {
 
         {step === 2 && (
           <motion.div
-            key="step3"
+            key="step2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="h-screen"
           >
-            <SeleccionarDestino onConfirm={handleDestinationConfirm} onBack={handleBack} busStopId={selectedParadero?.cod || ""} />
+            <SelectBus onConfirm={handleDestinationConfirm} onBack={handleBack} busStopId={selectedParadero?.cod || ""} />
           </motion.div>
         )}
 
         {step === 3 && (
           <motion.div
-            key="step4"
+            key="step3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
