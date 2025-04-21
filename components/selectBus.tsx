@@ -245,9 +245,6 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
 
   return (
     <div className="h-screen w-full flex flex-col relative" ref={containerRef}>
-      {/* Botón de Volver */}
-      <BackButton onClick={onBack} />
-
       {/* Fondo con mapa borroso y efecto parallax */}
       <motion.div
         className="absolute inset-0 filter blur-md"
@@ -283,9 +280,12 @@ export default function SeleccionarDestino({ onConfirm, onBack, busStopId = "PA4
           </div>
 
           <motion.div className="mb-6 h-[90px]" variants={itemVariants}>
-            <h2 className="text-2xl font-bold mb-1 text-center tracking-tight">
-              <span className="mr-2 text-2xl">🚏</span> {busStopInfo?.name || "Cargando paradero..."}
-            </h2>
+            <div className="flex items-center mb-2 relative">
+              <BackButton onClick={onBack} variant="inside-card" />
+              <h2 className="text-2xl font-bold tracking-tight text-center w-full">
+                <span className="mr-2 text-2xl">🚏</span> {busStopInfo?.name || "Cargando paradero..."}
+              </h2>
+            </div>
             {busStopInfo && (
               <p className="text-sm text-center text-gray-500">{busStopInfo.id}</p>
             )}

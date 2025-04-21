@@ -61,9 +61,6 @@ export default function ActivarAlertas({ paradero, destino, onComplete, onBack }
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {/* Botón de Volver */}
-      <BackButton onClick={onBack} />
-
       {/* Fondo con mapa borroso y efecto parallax */}
       <motion.div
         className="absolute inset-0 filter blur-md"
@@ -93,14 +90,17 @@ export default function ActivarAlertas({ paradero, destino, onComplete, onBack }
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <motion.h2
-            className="text-2xl font-bold mb-6 tracking-tight flex items-center"
+          <motion.div
+            className="flex items-center mb-4 relative"
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.4 }}
           >
-            <span className="mr-2 text-2xl">🔔</span> Recibir alertas
-          </motion.h2>
+            <BackButton onClick={onBack} variant="inside-card" />
+            <h2 className="text-2xl font-bold tracking-tight w-full text-center flex items-center justify-center">
+              <span className="mr-2 text-2xl">🔔</span> Recibir alertas
+            </h2>
+          </motion.div>
 
           <motion.div
             className="text-xl mb-8 font-medium"

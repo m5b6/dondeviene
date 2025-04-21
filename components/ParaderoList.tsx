@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ParaderoInfo, fetchNearbyParaderos } from '../lib/fetch-paraderos'
+import BackButton from "./BackButton"
 
 interface ParaderoListProps {
     userLocation: GeolocationPosition | null;
@@ -154,182 +155,179 @@ export default function ParaderoList({
     const showLocationSearch = !!userLocation && !forceManualMode;
 
     return (
-        <div className="flex flex-col h-full">
-            <div>
-                <h1 className="text-3xl font-bold text-center mb-3 tracking-tight flex items-center justify-center whitespace-nowrap">
-                    {showLocationSearch ?
-                        "Paraderos cerca de ti" :
-                        "Todos los paraderos"
-                    }
-                </h1>
+        <>
+            <BackButton onClick={handleBack} variant="inside-card" />
 
-                <p className="text-xl text-center mb-6 text-gray font-light">
-                    Selecciona un paradero
-                </p>
-            </div>
-
-            {/* Main content and button area */}
-            <div className="flex-1 flex flex-col min-h-0">
-                {/* Content area */}
-                <div className="flex-1 flex flex-col min-h-0">
-                    {/* Search input */}
-                    <div className="relative mb-4">
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder={"🔍 PC123, PA111..."}
-                            className="w-full p-3 border-radius-global border-2 border-gray-200 rounded-xl focus:border-black focus:outline-none focus:ring-0"
-                        />
-                        {search && (
-                            <button
-                                onClick={() => setSearch("")}
-                                className="absolute right-3 border-radius-global top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black"
-                            >
-                                ✕
-                            </button>
-                        )}
+            <div className="flex flex-col h-full">
+                <div>
+                    <div className="flex items-center mb-3 relative">
+                        <h1 className="text-3xl font-bold tracking-tight w-full text-center">
+                            {showLocationSearch ?
+                                "Paraderos cerca de ti" :
+                                "Todos los paraderos"
+                            }
+                        </h1>
                     </div>
 
-                    {/* Error states */}
-                    {error && !loading && !showLocationSearch && (
-                        <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    {nearbyError && showLocationSearch && (
-                        <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                            {nearbyError}
-                        </div>
-                    )}
-
-                    {/* Paradero list container */}
-                    <div className="flex-1 overflow-y-auto border-radius-global border-2 border-gray-200 rounded-xl mb-3 min-h-0">
-                        {/* Loading states */}
-                        {((loading && !showLocationSearch) || (nearbyLoading && showLocationSearch)) ? (
-                            <div className="h-full flex justify-center items-center py-8">
-                                <svg
-                                    className="animate-spin h-8 w-8 text-gray-500"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        className="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                    ></circle>
-                                    <path
-                                        className="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                    ></path>
-                                </svg>
-                            </div>
-                        ) : showLocationSearch ? (
-                            // Display nearby paraderos with location info
-                            filteredNearbyParaderos.length > 0 ? (
-                                <ul className="divide-y divide-gray-200">
-                                    <AnimatePresence>
-                                        {filteredNearbyParaderos.map((paradero, index) => (
-                                            <motion.li
-                                                key={paradero.id}
-                                                custom={index}
-                                                initial="hidden"
-                                                animate="visible"
-                                                variants={listItemVariants}
-                                            >
-                                                <button
-                                                    onClick={() => onParaderoSelect(paradero)}
-                                                    className="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-50"
-                                                >
-                                                    <div className="flex justify-between items-center">
-                                                        <div>
-                                                            <div className="font-medium text-lg flex items-center">
-                                                                {paradero.cod}
-                                                                {index === 0 && (
-                                                                    <span className="ml-2 text-yellow-600 opacity-75 text-sm flex items-center">
-                                                                        <span className="mr-1">✨</span>
-                                                                        <span className="text-xs">más cercano</span>
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <div className="text-sm text-gray-500 truncate max-w-[200px]">
-                                                                {paradero.name}
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-base text-gray-500 text-xs font-mono font-bold">
-                                                            {formatDistance(paradero.distance)}
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            </motion.li>
-                                        ))}
-                                    </AnimatePresence>
-                                </ul>
-                            ) : (
-                                <div className="p-4 text-center text-gray-500 h-full flex items-center justify-center">
-                                    {search ?
-                                        `No se encontraron paraderos con "${search}"` :
-                                        "No se encontraron paraderos cercanos"
-                                    }
-                                </div>
-                            )
-                        ) : (
-                            // Manual paradero search
-                            filteredParaderos.length > 0 ? (
-                                <ul className="divide-y divide-gray-200">
-                                    <AnimatePresence>
-                                        {filteredParaderos.slice(0, 100).map((paradero, index) => (
-                                            <motion.li
-                                                key={paradero}
-                                                custom={index}
-                                                initial="hidden"
-                                                animate="visible"
-                                                variants={listItemVariants}
-                                            >
-                                                <button
-                                                    onClick={() => onParaderoSelect(paradero)}
-                                                    className="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-50"
-                                                >
-                                                    <span className="font-medium text-lg">{paradero}</span>
-                                                </button>
-                                            </motion.li>
-                                        ))}
-                                    </AnimatePresence>
-                                </ul>
-                            ) : search ? (
-                                <div className="p-4 text-center text-gray-500 h-full flex items-center justify-center">
-                                    No se encontraron paraderos con "{search}"
-                                </div>
-                            ) : (
-                                <div className="p-4 text-center text-gray-500 h-full flex items-center justify-center">
-                                    Escribe para buscar paraderos
-                                </div>
-                            )
-                        )}
-
-                        {search && !showLocationSearch && filteredParaderos.length > 100 && (
-                            <div className="p-2 text-center text-xs text-gray-500 border-t border-gray-200">
-                                Mostrando 100 de {filteredParaderos.length} resultados
-                            </div>
-                        )}
-                    </div>
+                    <p className="text-xl text-center mb-6 text-gray font-light">
+                        Selecciona un paradero
+                    </p>
                 </div>
 
-                {/* Back button - fixed at bottom */}
-                <button
-                    onClick={handleBack}
-                    className="apple-button w-full py-3 text-gray-500 text-sm font-medium hover:text-black transition-colors"
-                    style={{ paddingBottom: "0px" }}
-                >
-                    Volver
-                </button>
+                {/* Main content and button area */}
+                <div className="flex-1 flex flex-col min-h-0">
+                    {/* Content area */}
+                    <div className="flex-1 flex flex-col min-h-0">
+                        {/* Search input */}
+                        <div className="relative mb-4">
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder={"🔍 PC123, PA111..."}
+                                className="w-full p-3 border-radius-global border-2 border-gray-200 rounded-xl focus:border-black focus:outline-none focus:ring-0"
+                            />
+                            {search && (
+                                <button
+                                    onClick={() => setSearch("")}
+                                    className="absolute right-3 border-radius-global top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Error states */}
+                        {error && !loading && !showLocationSearch && (
+                            <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                                {error}
+                            </div>
+                        )}
+
+                        {nearbyError && showLocationSearch && (
+                            <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                                {nearbyError}
+                            </div>
+                        )}
+
+                        {/* Paradero list container */}
+                        <div className="flex-1 overflow-y-auto border-radius-global border-2 border-gray-200 rounded-xl mb-3 min-h-0">
+                            {/* Loading states */}
+                            {((loading && !showLocationSearch) || (nearbyLoading && showLocationSearch)) ? (
+                                <div className="h-full flex justify-center items-center py-8">
+                                    <svg
+                                        className="animate-spin h-8 w-8 text-gray-500"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
+                                    </svg>
+                                </div>
+                            ) : showLocationSearch ? (
+                                // Display nearby paraderos with location info
+                                filteredNearbyParaderos.length > 0 ? (
+                                    <ul className="divide-y divide-gray-200">
+                                        <AnimatePresence>
+                                            {filteredNearbyParaderos.map((paradero, index) => (
+                                                <motion.li
+                                                    key={paradero.id}
+                                                    custom={index}
+                                                    initial="hidden"
+                                                    animate="visible"
+                                                    variants={listItemVariants}
+                                                >
+                                                    <button
+                                                        onClick={() => onParaderoSelect(paradero)}
+                                                        className="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-50"
+                                                    >
+                                                        <div className="flex justify-between items-center">
+                                                            <div>
+                                                                <div className="font-medium text-lg flex items-center">
+                                                                    {paradero.cod}
+                                                                    {index === 0 && (
+                                                                        <span className="ml-2 text-yellow-600 opacity-75 text-sm flex items-center">
+                                                                            <span className="mr-1">✨</span>
+                                                                            <span className="text-xs">más cercano</span>
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                                                                    {paradero.name}
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-base text-gray-500 text-xs font-mono font-bold">
+                                                                {formatDistance(paradero.distance)}
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                </motion.li>
+                                            ))}
+                                        </AnimatePresence>
+                                    </ul>
+                                ) : (
+                                    <div className="p-4 text-center text-gray-500 h-full flex items-center justify-center">
+                                        {search ?
+                                            `No se encontraron paraderos con "${search}"` :
+                                            "No se encontraron paraderos cercanos"
+                                        }
+                                    </div>
+                                )
+                            ) : (
+                                // Manual paradero search
+                                filteredParaderos.length > 0 ? (
+                                    <ul className="divide-y divide-gray-200">
+                                        <AnimatePresence>
+                                            {filteredParaderos.slice(0, 100).map((paradero, index) => (
+                                                <motion.li
+                                                    key={paradero}
+                                                    custom={index}
+                                                    initial="hidden"
+                                                    animate="visible"
+                                                    variants={listItemVariants}
+                                                >
+                                                    <button
+                                                        onClick={() => onParaderoSelect(paradero)}
+                                                        className="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-50"
+                                                    >
+                                                        <span className="font-medium text-lg">{paradero}</span>
+                                                    </button>
+                                                </motion.li>
+                                            ))}
+                                        </AnimatePresence>
+                                    </ul>
+                                ) : search ? (
+                                    <div className="p-4 text-center text-gray-500 h-full flex items-center justify-center">
+                                        No se encontraron paraderos con "{search}"
+                                    </div>
+                                ) : (
+                                    <div className="p-4 text-center text-gray-500 h-full flex items-center justify-center">
+                                        Escribe para buscar paraderos
+                                    </div>
+                                )
+                            )}
+
+                            {search && !showLocationSearch && filteredParaderos.length > 100 && (
+                                <div className="p-2 text-center text-xs text-gray-500 border-t border-gray-200">
+                                    Mostrando 100 de {filteredParaderos.length} resultados
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </>
     );
 } 

@@ -55,28 +55,6 @@ export default function Home() {
     }, 300)
   }
 
-  // DIRECT ROUTE FROM PARADERO MAP TO SELECT BUS - SKIPS STEP 2 COMPLETELY
-  const handleParaderoMapConfirm = (paraderoCode: string) => {
-    // Create a simple paradero info object with just the code
-    const simpleParadero: SelectedParaderoInfo = {
-      id: 0,
-      cod: paraderoCode,
-      name: `Paradero ${paraderoCode}`,
-      distance: 0,
-      pos: [0, 0]
-    };
-    
-    // Save the paradero and go DIRECTLY to step 3 (selectBus.tsx)
-    setSelectedParadero(simpleParadero);
-    setIsTransitioning(true);
-    
-    // Skip to step 3 (selectBus.tsx)
-    setTimeout(() => {
-      setStep(3);
-      setIsTransitioning(false);
-    }, 300);
-  };
-
   const handleDestinationConfirm = (dest: string) => {
     setIsTransitioning(true)
     setDestination(dest)
