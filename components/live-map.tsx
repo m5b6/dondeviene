@@ -364,11 +364,11 @@ export const LiveMap = ({ stops, route, buses, user, fit, fitKey, onStopClick, a
     for (const point of points) bounds.extend([point.longitude, point.latitude]);
     const flat = map.cameraForBounds(bounds, {
       padding: { top: 100, bottom: 90, left: 60, right: 60 },
-      maxZoom: 16.2,
+      maxZoom: 17,
       bearing: camera.bearing,
     });
     if (!flat) return;
-    const tiltSlack = tiltedRef.current ? 0.7 : 0;
+    const tiltSlack = tiltedRef.current ? 0.3 : 0;
     map.easeTo({ center: flat.center, zoom: (flat.zoom ?? 15) - tiltSlack, duration, ...camera });
   }, [fitKey, ready]);
 
