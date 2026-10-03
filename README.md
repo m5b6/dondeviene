@@ -59,4 +59,4 @@ npm install
 npm run dev
 ```
 
-Node 20 or newer. Deployed on Vercel in the `gru1` region (closest to Santiago); `data/catalog/catalog.json` is bundled with the API functions through `outputFileTracingIncludes`.
+Node 20 or newer. Live at https://dondeviene-matiasberriosos-projects.vercel.app (Vercel project `dondeviene`; the `dondeviene.cl` domains still point at another host). Deployed on Vercel in the `gru1` region (closest to Santiago); `data/catalog/catalog.json` is bundled with the API functions through `outputFileTracingIncludes`.

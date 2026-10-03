@@ -109,12 +109,14 @@ const arrivalSubline = (arrival: ServiceArrivals): string => {
     return arrival.message || 'Sin información por ahora';
   }
   const parts: string[] = [];
-  const distance = formatDistance(arrival.buses[0].distanceMeters);
+  const meters = arrival.buses[0].distanceMeters;
+  const distance = meters && meters > 0 ? formatDistance(meters) : null;
   if (distance) parts.push(distance);
   const second = arrival.buses[1];
   if (second) {
     const short = formatEtaShort(second.eta);
-    if (short) parts.push(`luego ${short}`);
+    if (short === 'llegando') parts.push('otro bus llegando');
+    else if (short) parts.push(`luego ${short}`);
   }
   return parts.join(' · ');
 };
@@ -132,7 +134,7 @@ export const ArrivalRow = ({ arrival, href, onSelect, selected = false }: Arriva
     <>
       <LinePlate service={arrival.service} color={arrival.color} size={52} muted={inactive} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className={`truncate text-xl font-bold leading-6 ${inactive ? 'text-mute' : ''}`}>
+        <span className={`line-clamp-2 text-xl font-bold leading-6 ${inactive ? 'text-mute' : ''}`}>
           {arrival.destination ?? 'Destino no informado'}
         </span>
         <span className="text-[13px] font-medium leading-4 text-mute">{arrivalSubline(arrival)}</span>
