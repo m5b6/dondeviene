@@ -119,6 +119,18 @@ Bottom bar, 72 px, three tabs: Cerca, Mis paraderos, Buscar. The active tab has 
 
 Three columns: 300 px ink rail (wordmark, search, saved stops), fluid departures board (stop header, table with Línea / Destino / Próximo / Luego / Distancia, 76 px rows), 380 px strip map for the selected service, separated by a 2 px ink rule. Below 1024 px collapse to the mobile screens.
 
+## Map
+
+The map is where the app lets its hair down. Everything around it stays signage-serious; inside the frame it is a toy town.
+
+- **Base**: OpenFreeMap "liberty" recoloured by `lib/map-style.ts`. Solid, saturated colours, no washed-out greys: cream land `#FFF1D6`, mint parks `#B6E59C`, sky-blue water `#7FCDF5`, sunny roads (white streets, `#FFE48A` avenues, `#FFC857` main roads, `#FF9E80` motorways) with round line ends.
+- **3D**: the camera is tilted 58° and turned 17°. Buildings are solid pastel extrusions (peach, pink, lilac, periwinkle by height) with a soft light and a sky and fog horizon. A `3D / 2D` chip flattens the map; the camera framing, the pitch and the motion all respect `prefers-reduced-motion`.
+- **Buses** are chunky little toy buses in their line's colour: white outline, stacked-shadow extrusion, windows, wheels, a ground shadow and a gentle bob. The ETA rides above in a white speech bubble, yellow when the bus is arriving.
+- **Your stop** is a yellow lollipop pin that drops in with a bounce. **You** are a blue dot with a pulsing ring.
+- **Route** is a fat rounded line in the line colour with a white casing.
+- **Labels** are plum `#3B2A5A` on a cream halo. POIs, shields and country labels are removed.
+- Buses are estimates placed from red.cl's distance-to-stop; the caption under the map says so.
+
 ## Copy
 
 - UI in Spanish, Chilean register, short. Code in English.

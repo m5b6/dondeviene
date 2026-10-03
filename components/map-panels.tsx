@@ -13,6 +13,7 @@ import { LiveMap } from './live-map-lazy';
 import { useRoute } from './service-view';
 
 const NEAR_USER_METERS = 1500;
+const FIT_BUS_METERS = 2500;
 
 const Caption = ({ children }: { children: string }) => (
   <p className="px-5 py-2 text-[13px] font-medium leading-4 text-mute lg:px-12">{children}</p>
@@ -53,10 +54,12 @@ export const RouteMap = ({ service, stopCode, fallbackStop, arrival, heightClass
         latitude: estimate.position.latitude,
         longitude: estimate.position.longitude,
         label: formatEtaShort(bus.eta) || '—',
+        color: line.hex,
+        arriving: bus.eta.kind === 'arriving',
       });
     });
     return { buses: placed, unplaced: missing };
-  }, [picked, stopOnRoute, arrival]);
+  }, [picked, stopOnRoute, arrival, line.hex]);
 
   const stops: MapStop[] = useMemo(() => {
     if (picked) {
@@ -75,7 +78,18 @@ export const RouteMap = ({ service, stopCode, fallbackStop, arrival, heightClass
   const fit: MapPoint[] = useMemo(() => {
     const points: MapPoint[] = [];
     if (stopPoint) points.push(stopPoint);
-    points.push(...buses);
+    const close = stopPoint
+      ? buses.filter((bus) => haversineMeters(bus.latitude, bus.longitude, stopPoint.latitude, stopPoint.longitude) <= FIT_BUS_METERS)
+      : buses;
+    if (close.length > 0) points.push(...close);
+    else if (buses.length > 0 && stopPoint) {
+      const nearest = [...buses].sort(
+        (a, b) =>
+          haversineMeters(a.latitude, a.longitude, stopPoint.latitude, stopPoint.longitude) -
+          haversineMeters(b.latitude, b.longitude, stopPoint.latitude, stopPoint.longitude),
+      )[0];
+      points.push(nearest);
+    }
     if (user && stopPoint && haversineMeters(user.latitude, user.longitude, stopPoint.latitude, stopPoint.longitude) < NEAR_USER_METERS) {
       points.push(user);
     }
