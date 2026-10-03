@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { ApiError, api, friendlyError } from '@/lib/api';
 import { lineForService } from '@/lib/palette';
-import type { RouteDirection, RouteFile, ServiceArrivals } from '@/server/red/types';
+import { type DirectionKey, pickDirection } from '@/lib/route-direction';
+import type { RouteFile, ServiceArrivals } from '@/server/red/types';
 import { ServiceStrip } from './service-strip';
 import { Notice } from './sign';
 
@@ -12,50 +13,35 @@ interface ServiceViewProps {
   stopCode?: string | null;
   arrival?: ServiceArrivals | null;
   embedded?: boolean;
+  mapSlot?: ReactNode;
 }
 
 export const useRoute = (service: string) => {
   const [route, setRoute] = useState<RouteFile | null>(null);
   const [error, setError] = useState<unknown>(null);
   useEffect(() => {
-    const controller = new AbortController();
+    let cancelled = false;
     setRoute(null);
     setError(null);
+    if (!service) return;
     api
-      .route(service, controller.signal)
-      .then(setRoute)
+      .route(service)
+      .then((loaded) => {
+        if (!cancelled) setRoute(loaded);
+      })
       .catch((caught) => {
-        if ((caught as { name?: string }).name !== 'AbortError') setError(caught);
+        if (!cancelled) setError(caught);
       });
-    return () => controller.abort();
+    return () => {
+      cancelled = true;
+    };
   }, [service]);
   return { route, error };
 };
 
-const pickDirection = (
-  route: RouteFile,
-  stopCode: string | null | undefined,
-  arrival: ServiceArrivals | null | undefined,
-  choice: 'outbound' | 'inbound' | null,
-): { key: 'outbound' | 'inbound'; direction: RouteDirection } | null => {
-  const all = (['outbound', 'inbound'] as const)
-    .map((key) => ({ key, direction: route[key] }))
-    .filter((entry): entry is { key: 'outbound' | 'inbound'; direction: RouteDirection } => entry.direction !== null);
-  if (choice) {
-    const chosen = all.find((entry) => entry.key === choice);
-    if (chosen) return chosen;
-  }
-  const serving = stopCode ? all.filter((entry) => entry.direction.stops.some((stop) => stop.code === stopCode)) : all;
-  const pool = serving.length > 0 ? serving : all;
-  const byDestination = arrival?.destination
-    ? pool.find((entry) => entry.direction.destination === arrival.destination)
-    : undefined;
-  return byDestination ?? pool[0] ?? null;
-};
-
-export const ServiceView = ({ service, stopCode, arrival, embedded = false }: ServiceViewProps) => {
+export const ServiceView = ({ service, stopCode, arrival, embedded = false, mapSlot }: ServiceViewProps) => {
   const { route, error } = useRoute(service);
-  const [choice, setChoice] = useState<'outbound' | 'inbound' | null>(null);
+  const [choice, setChoice] = useState<DirectionKey | null>(null);
 
   useEffect(() => setChoice(null), [service]);
 
@@ -90,6 +76,16 @@ export const ServiceView = ({ service, stopCode, arrival, embedded = false }: Se
           </div>
         </div>
       )}
+      {mapSlot}
+      {!embedded && stopCode ? (
+        <a
+          href="#tu-paradero"
+          className="flex h-12 items-center justify-between border-y-2 border-ink px-5 text-[15px] font-extrabold lg:px-12"
+        >
+          <span>Ir a tu paradero</span>
+          <span aria-hidden="true">↓</span>
+        </a>
+      ) : null}
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-5 lg:px-12">
         {embedded ? (
           <div className="sticky top-0 z-10 flex items-center gap-3 border-b-2 border-ink bg-paper py-4">

@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { RouteMap } from '@/components/map-panels';
 import { ServiceView } from '@/components/service-view';
 import {
   ArrivalRow,
   ArrowLeft,
+  ArrowRight,
   BookmarkGlyph,
   Freshness,
   Notice,
@@ -37,9 +39,20 @@ export default function StopPage() {
   const selectedService = selected ?? running[0]?.service ?? services[0]?.service ?? null;
   const selectedArrival = services.find((service) => service.service === selectedService) ?? null;
   const name = data ? displayStopName(data.catalogStop?.name, data.stop.name) : null;
-  const where = data?.catalogStop ? [data.catalogStop.street, data.catalogStop.commune ? titleCase(data.catalogStop.commune) : null].filter(Boolean).join(' · ') : null;
+  const where = data?.catalogStop
+    ? [data.catalogStop.street, data.catalogStop.commune ? titleCase(data.catalogStop.commune) : null].filter(Boolean).join(' · ')
+    : null;
   const saved = isSaved(code);
   const saveLabel = saved ? 'Quitar de mis paraderos' : 'Guardar paradero';
+  const stopPoint =
+    data && data.stop.latitude !== null && data.stop.longitude !== null
+      ? { code, name: name ?? code, latitude: data.stop.latitude, longitude: data.stop.longitude }
+      : null;
+
+  const select = (service: string) => {
+    setSelected(service);
+    if (!desktop) window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (!valid) {
     return (
@@ -80,6 +93,27 @@ export default function StopPage() {
           </div>
         </header>
 
+        {desktop || !stopPoint ? null : (
+          <>
+            <RouteMap
+              service={selectedService}
+              stopCode={code}
+              fallbackStop={stopPoint}
+              arrival={selectedArrival}
+              heightClass="h-[300px]"
+            />
+            {selectedService ? (
+              <Link
+                href={`/servicio/${encodeURIComponent(selectedService)}?stop=${code}`}
+                className="flex h-12 items-center justify-between border-y-2 border-ink px-5 text-[15px] font-extrabold"
+              >
+                <span>Ver paradas del {selectedService}</span>
+                <ArrowRight size={20} />
+              </Link>
+            ) : null}
+          </>
+        )}
+
         <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-5 lg:px-12">
           {error && !data ? (
             <Notice title={friendlyError(error)} body="Vuelve a intentar en unos segundos.">
@@ -95,15 +129,11 @@ export default function StopPage() {
           <ul>
             {services.map((service) => (
               <li key={`${service.service}-${service.direction ?? ''}`}>
-                {desktop ? (
-                  <ArrivalRow
-                    arrival={service}
-                    onSelect={() => setSelected(service.service)}
-                    selected={service.service === selectedService}
-                  />
-                ) : (
-                  <ArrivalRow arrival={service} href={`/servicio/${encodeURIComponent(service.service)}?stop=${code}`} />
-                )}
+                <ArrivalRow
+                  arrival={service}
+                  onSelect={() => select(service.service)}
+                  selected={service.service === selectedService}
+                />
               </li>
             ))}
           </ul>
@@ -128,15 +158,27 @@ export default function StopPage() {
 
       {desktop ? (
         <aside
-          data-scroller
-          className="sticky top-0 flex h-dvh w-[400px] flex-none flex-col self-start overflow-y-auto border-l-2 border-ink"
-          aria-label="Recorrido del servicio seleccionado"
+          className="sticky top-0 flex h-dvh w-[440px] flex-none flex-col self-start overflow-hidden border-l-2 border-ink"
+          aria-label="Mapa y recorrido del servicio seleccionado"
         >
-          {selectedService ? (
-            <ServiceView service={selectedService} stopCode={code} arrival={selectedArrival} embedded />
-          ) : (
-            <Notice title="Elige un servicio" body="Aquí verás su recorrido." />
-          )}
+          {stopPoint ? (
+            <div className="flex-none border-b-2 border-ink">
+              <RouteMap
+                service={selectedService}
+                stopCode={code}
+                fallbackStop={stopPoint}
+                arrival={selectedArrival}
+                heightClass="h-[340px]"
+              />
+            </div>
+          ) : null}
+          <div data-scroller className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            {selectedService ? (
+              <ServiceView service={selectedService} stopCode={code} arrival={selectedArrival} embedded />
+            ) : (
+              <Notice title="Elige un servicio" body="Aquí verás su recorrido." />
+            )}
+          </div>
         </aside>
       ) : null}
     </div>

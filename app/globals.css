@@ -7,6 +7,7 @@
 }
 
 html {
+  scroll-behavior: smooth;
   background: #f4f3ee;
   -webkit-text-size-adjust: 100%;
 }
@@ -32,6 +33,10 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
@@ -70,4 +75,53 @@ button {
   to {
     transform: scaleX(0);
   }
+}
+
+.dv-bus {
+  position: relative;
+  width: 34px;
+  height: 34px;
+}
+
+.dv-bus-icon {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #f4f3ee;
+  border-radius: 8px;
+  background: #121212;
+  color: #f4f3ee;
+  box-sizing: border-box;
+}
+
+.dv-bus-label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-bottom: 4px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  border-radius: 4px;
+  background: #ffc20e;
+  color: #121212;
+  padding: 2px 6px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 16px;
+}
+
+.dv-user {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: #0057b8;
+  outline: 2px solid #0057b8;
+  box-sizing: border-box;
+}
+
+.maplibregl-ctrl-attrib {
+  font-family: inherit;
 }

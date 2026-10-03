@@ -13,9 +13,13 @@
     "typecheck": "tsc --noEmit",
     "typecheck:server": "tsc -p tsconfig.server.json",
     "crawl": "tsx scripts/crawl-catalog.ts",
-    "probe": "tsx scripts/probe-variants.ts"
+    "probe": "tsx scripts/probe-variants.ts",
+    "predev": "node scripts/copy-maplibre-worker.mjs",
+    "prebuild": "node scripts/copy-maplibre-worker.mjs",
+    "postinstall": "node scripts/copy-maplibre-worker.mjs"
   },
   "dependencies": {
+    "maplibre-gl": "^6.11.2",
     "next": "^15.5.27",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

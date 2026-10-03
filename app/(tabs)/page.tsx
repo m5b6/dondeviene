@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import { NearbyMap } from '@/components/map-panels';
 import { ArrivalRow, Freshness, LinePlate, Notice, PrimaryButton, ScreenHeader, SecondaryButton, StopPlate } from '@/components/sign';
 import { api, friendlyError } from '@/lib/api';
 import { formatEtaShort, titleCase } from '@/lib/format';
@@ -70,6 +71,7 @@ const CompactStop = ({ stop }: { stop: NearbyStop }) => {
 };
 
 function Home() {
+  const router = useRouter();
   const search = useSearchParams();
   const rawLat = search.get('lat');
   const rawLng = search.get('lng');
@@ -111,6 +113,14 @@ function Home() {
       <ScreenHeader label={manual ? 'Cerca de' : 'Cerca de ti'} title={hasPoint ? place : 'Dónde viene'} big>
         {first ? <div className="mt-2"><Freshness state={firstState} dark /></div> : null}
       </ScreenHeader>
+      {stops && stops.length > 0 && latitude !== null && longitude !== null ? (
+        <NearbyMap
+          stops={stops}
+          origin={{ latitude, longitude }}
+          heightClass="h-[260px] lg:h-[340px]"
+          onStopClick={(stopCode) => router.push(`/paradero/${stopCode}`)}
+        />
+      ) : null}
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-5 lg:px-12">
         {!hasPoint && geo.status !== 'denied' && geo.status !== 'unavailable' ? (
           <Notice title="¿Dónde estás?" body="Te mostramos los paraderos a pie y cuándo llega cada micro.">

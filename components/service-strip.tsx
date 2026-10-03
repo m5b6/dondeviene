@@ -30,12 +30,9 @@ export const ServiceStrip = ({ stops, lineHex, stopCode, arrival, compact = fals
     if (!element) return;
     const rect = element.getBoundingClientRect();
     const scroller = element.closest<HTMLElement>('[data-scroller]');
-    if (scroller) {
-      const box = scroller.getBoundingClientRect();
-      scroller.scrollTop += rect.top - box.top - box.height / 2 + rect.height / 2;
-    } else {
-      window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight / 3 });
-    }
+    if (!scroller) return;
+    const box = scroller.getBoundingClientRect();
+    scroller.scrollTop += rect.top - box.top - box.height / 2 + rect.height / 2;
   }, [stopCode, stops]);
 
   return (
@@ -48,7 +45,7 @@ export const ServiceStrip = ({ stops, lineHex, stopCode, arrival, compact = fals
 
         if (you) {
           return (
-            <li key={`${stop.code}-${index}`} ref={youRef} className="flex" style={{ minHeight: rowHeight }}>
+            <li key={`${stop.code}-${index}`} ref={youRef} id="tu-paradero" className="flex scroll-mt-20" style={{ minHeight: rowHeight }}>
               <Spine hex={lineHex} first={first} last={last}>
                 <span className="block h-9 w-9 border-4 border-ink bg-signal" aria-hidden="true" />
               </Spine>

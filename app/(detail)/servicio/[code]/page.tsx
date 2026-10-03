@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { RouteMap } from '@/components/map-panels';
 import { ServiceView } from '@/components/service-view';
 import { ArrowLeft } from '@/components/sign';
 import { useArrivals } from '@/lib/hooks';
@@ -30,7 +31,12 @@ function ServiceScreen() {
           {stopCode ? `Paradero ${stopCode}` : 'Inicio'}
         </Link>
       </nav>
-      <ServiceView service={service} stopCode={stopCode} arrival={arrival} />
+      <ServiceView
+        service={service}
+        stopCode={stopCode}
+        arrival={arrival}
+        mapSlot={<RouteMap service={service} stopCode={stopCode} arrival={arrival} heightClass="h-[300px] lg:h-[380px]" />}
+      />
     </>
   );
 }

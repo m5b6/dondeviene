@@ -27,13 +27,25 @@ const getJson = async <T>(url: string, signal?: AbortSignal): Promise<T> => {
   return body as T;
 };
 
+const routeCache = new Map<string, Promise<RouteFile>>();
+
+const cachedRoute = (service: string): Promise<RouteFile> => {
+  const existing = routeCache.get(service);
+  if (existing) return existing;
+  const request = getJson<RouteFile>(`/api/services/${encodeURIComponent(service)}`).catch((error) => {
+    routeCache.delete(service);
+    throw error;
+  });
+  routeCache.set(service, request);
+  return request;
+};
+
 export const api = {
   nearby: (latitude: number, longitude: number, signal?: AbortSignal) =>
     getJson<{ stops: NearbyStop[] }>(`/api/stops/nearby?lat=${latitude}&lng=${longitude}&limit=6&radius=900`, signal),
   arrivals: (code: string, service?: string, signal?: AbortSignal) =>
     getJson<ArrivalsResult>(`/api/stops/${code}${service ? `?service=${encodeURIComponent(service)}` : ''}`, signal),
-  route: (service: string, signal?: AbortSignal) =>
-    getJson<RouteFile>(`/api/services/${encodeURIComponent(service)}`, signal),
+  route: (service: string) => cachedRoute(service),
   search: (query: string, signal?: AbortSignal) =>
     getJson<SearchResult>(`/api/stops/search?q=${encodeURIComponent(query)}`, signal),
 };
