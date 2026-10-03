@@ -1,35 +1,34 @@
-import type React from "react"
-import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
-import { barlowCondensed } from "./fonts"
-import "./globals.css"
+import type { Metadata, Viewport } from 'next';
+import { Archivo } from 'next/font/google';
+import type { ReactNode } from 'react';
+import './globals.css';
 
-const inter = Inter({ subsets: ["latin"] })
+const archivo = Archivo({
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-archivo',
+});
 
 export const viewport: Viewport = {
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
-  viewportFit: "cover",
-}
+  viewportFit: 'cover',
+  themeColor: '#121212',
+};
 
 export const metadata: Metadata = {
-  title: "DondeViene",
-  description: "Encuentra tu paradero más cercano",
-  generator: 'v0.dev'
-}
+  title: { default: 'Dónde viene', template: '%s · Dónde viene' },
+  description: 'Cuándo llega tu micro en Santiago, con los datos de Red Movilidad.',
+  applicationName: 'Dónde viene',
+  appleWebApp: { capable: true, title: 'Dónde viene', statusBarStyle: 'black-translucent' },
+  formatDetection: { telephone: false },
+};
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es" className={`${barlowCondensed.variable}`}>
-      <head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-      </head>
-      <body className={inter.className}>{children}</body>
+    <html lang="es" className={archivo.variable}>
+      <body>{children}</body>
     </html>
-  )
+  );
 }

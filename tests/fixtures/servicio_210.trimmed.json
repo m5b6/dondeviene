@@ -1,0 +1,318 @@
+{
+ "negocio": {
+  "id": 19,
+  "nombre": "Consorcio Conecta",
+  "color": "",
+  "url": ""
+ },
+ "ida": {
+  "id": 1503,
+  "horarios": [
+   {
+    "tipoDia": "Lunes a Viernes",
+    "inicio": "00:00",
+    "fin": "23:59"
+   },
+   {
+    "tipoDia": "Sábado",
+    "inicio": "00:00",
+    "fin": "23:59"
+   },
+   {
+    "tipoDia": "Domingo y Festivos",
+    "inicio": "00:00",
+    "fin": "23:59"
+   }
+  ],
+  "paraderos": [
+   {
+    "id": 13483,
+    "cod": "PI1840",
+    "num": 0,
+    "pos": [
+     -33.4626374,
+     -70.6954462
+    ],
+    "name": "General Amengual esq. Callejón Ugarte",
+    "comuna": "ESTACIÓN CENTRAL",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.4626374",
+     "stopCoordenadaY": "-70.6954462",
+     "stopId": 1283977
+    },
+    "eje": "General Amengual",
+    "codSimt": "PI1840",
+    "distancia": 0
+   },
+   {
+    "id": 10289,
+    "cod": "PI909",
+    "num": 0,
+    "pos": [
+     -33.4569931,
+     -70.6950588
+    ],
+    "name": "Concón esq. Manuel Thompson",
+    "comuna": "ESTACIÓN CENTRAL",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.4569931",
+     "stopCoordenadaY": "-70.6950588",
+     "stopId": 1277826
+    },
+    "eje": "Concón",
+    "codSimt": "PI909",
+    "distancia": 0
+   },
+   {
+    "id": 10291,
+    "cod": "PI910",
+    "num": 0,
+    "pos": [
+     -33.4555203,
+     -70.6956079
+    ],
+    "name": "Parada 6 - Concón",
+    "comuna": "ESTACIÓN CENTRAL",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.4555203",
+     "stopCoordenadaY": "-70.6956079",
+     "stopId": 1277827
+    },
+    "eje": "Concón",
+    "codSimt": "PI910",
+    "distancia": 0
+   },
+   {
+    "id": 10114,
+    "cod": "PI340",
+    "num": 0,
+    "pos": [
+     -33.45376,
+     -70.6893659
+    ],
+    "name": "Parada 3 - Metro San Alberto Hurtado",
+    "comuna": "ESTACIÓN CENTRAL",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.4537600",
+     "stopCoordenadaY": "-70.6893659",
+     "stopId": 1280344
+    },
+    "eje": "Alameda",
+    "codSimt": "PI340",
+    "distancia": 0
+   },
+   {
+    "id": 10134,
+    "cod": "PI341",
+    "num": 0,
+    "pos": [
+     -33.4530294,
+     -70.6865811
+    ],
+    "name": "Parada 1 - Metro Universidad de Santiago",
+    "comuna": "ESTACIÓN CENTRAL",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.4530294",
+     "stopCoordenadaY": "-70.6865811",
+     "stopId": 1278030
+    },
+    "eje": "Alameda",
+    "codSimt": "PI341",
+    "distancia": 0
+   }
+  ],
+  "path": [
+   [
+    -33.463178,
+    -70.695377
+   ],
+   [
+    -33.463012,
+    -70.69543
+   ],
+   [
+    -33.462407,
+    -70.695553
+   ],
+   [
+    -33.460698,
+    -70.695979
+   ],
+   [
+    -33.460659,
+    -70.695901
+   ],
+   [
+    -33.460073,
+    -70.694646
+   ]
+  ],
+  "destino": "Puente Alto",
+  "itinerario": true
+ },
+ "regreso": {
+  "id": 1504,
+  "horarios": [
+   {
+    "tipoDia": "Lunes a Viernes",
+    "inicio": "00:00",
+    "fin": "23:59"
+   },
+   {
+    "tipoDia": "Sábado",
+    "inicio": "00:00",
+    "fin": "23:59"
+   },
+   {
+    "tipoDia": "Domingo y Festivos",
+    "inicio": "00:00",
+    "fin": "23:59"
+   }
+  ],
+  "paraderos": [
+   {
+    "id": 6807,
+    "cod": "PF93",
+    "num": 0,
+    "pos": [
+     -33.612591,
+     -70.574257
+    ],
+    "name": "Balmaceda esq. Av. Eyzaguirre",
+    "comuna": "PUENTE ALTO",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.6125910",
+     "stopCoordenadaY": "-70.5742570",
+     "stopId": 1283361
+    },
+    "eje": "Balmaceda",
+    "codSimt": "PF93",
+    "distancia": 0
+   },
+   {
+    "id": 6808,
+    "cod": "PF126",
+    "num": 0,
+    "pos": [
+     -33.6116119,
+     -70.5744979
+    ],
+    "name": "Balmaceda esq. 21 de Mayo",
+    "comuna": "PUENTE ALTO",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.6116119",
+     "stopCoordenadaY": "-70.5744979",
+     "stopId": 1284180
+    },
+    "eje": "Balmaceda",
+    "codSimt": "PF126",
+    "distancia": 0
+   },
+   {
+    "id": 6806,
+    "cod": "PF95",
+    "num": 0,
+    "pos": [
+     -33.606501,
+     -70.575557
+    ],
+    "name": "Parada 2 - Paradero 39 Av.Vicuña Mackenna",
+    "comuna": "PUENTE ALTO",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.6065010",
+     "stopCoordenadaY": "-70.5755570",
+     "stopId": 1284415
+    },
+    "eje": "Balmaceda",
+    "codSimt": "PF95",
+    "distancia": 0
+   },
+   {
+    "id": 6488,
+    "cod": "PF96",
+    "num": 0,
+    "pos": [
+     -33.6032749,
+     -70.576983
+    ],
+    "name": "Parada 2 - Paradero 38 Av.Vicuña Mackenna",
+    "comuna": "PUENTE ALTO",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.6032749",
+     "stopCoordenadaY": "-70.5769830",
+     "stopId": 1280941
+    },
+    "eje": "Av. Concha y Toro",
+    "codSimt": "PF96",
+    "distancia": 0
+   },
+   {
+    "id": 6478,
+    "cod": "PF97",
+    "num": 0,
+    "pos": [
+     -33.6009169,
+     -70.5774399
+    ],
+    "name": "Parada 2 - Metro Las Mercedes",
+    "comuna": "PUENTE ALTO",
+    "type": 0,
+    "servicios": [],
+    "stop": {
+     "stopCoordenadaX": "-33.6009169",
+     "stopCoordenadaY": "-70.5774399",
+     "stopId": 1280942
+    },
+    "eje": "Av. Concha y Toro",
+    "codSimt": "PF97",
+    "distancia": 0
+   }
+  ],
+  "path": [
+   [
+    -33.613741,
+    -70.574378
+   ],
+   [
+    -33.613631,
+    -70.574307
+   ],
+   [
+    -33.613515,
+    -70.574239
+   ],
+   [
+    -33.613407,
+    -70.574199
+   ],
+   [
+    -33.613245,
+    -70.574165
+   ],
+   [
+    -33.613074,
+    -70.574168
+   ]
+  ],
+  "destino": "Estación Central",
+  "itinerario": true
+ }
+}

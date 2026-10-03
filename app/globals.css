@@ -2,67 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import Barlow Condensed font */
-@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
-html,
-body {
-  height: 100%; /* Prevent pull-to-refresh issues */
-  overflow: hidden; /* Prevent body scroll on mobile */
-}
-
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 245, 245, 247;
-  --gray-text: 102, 102, 102;
-  --accent-color: 52, 199, 181;
-  --transition-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
+  color-scheme: light;
+}
+
+html {
+  background: #f4f3ee;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    "SF Pro Text", "Helvetica Neue", sans-serif;
+  margin: 0;
+  background: #f4f3ee;
+  color: #121212;
+  font-family: 'Helvetica Neue', var(--font-archivo), Helvetica, sans-serif;
+  font-weight: 500;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
-  letter-spacing: -0.01em;
-  overflow-x: hidden;
-  @apply text-xs sm:text-base; /* Responsive base font size (xs default) */
+  font-variant-numeric: tabular-nums;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-
-input,
+a,
 button {
-  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Apple-style animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
+:focus-visible {
+  outline: 2px solid #121212;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-@keyframes slideUp {
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@keyframes flip {
   from {
-    transform: translateY(20px);
+    transform: translateY(-40%);
     opacity: 0;
   }
   to {
@@ -71,214 +59,15 @@ button {
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.5s var(--transition-ease) forwards;
+.flip {
+  animation: flip 160ms ease-out;
 }
 
-.animate-slide-up {
-  animation: slideUp 0.5s var(--transition-ease) forwards;
-}
-
-/* Apple-style button */
-.apple-button {
-  @apply font-medium transition-all duration-300 py-4; /* Use standard padding */
-  letter-spacing: -0.01em;
-  border-radius: 30px !important;
-  /* padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); */ /* Removed safe area calc */
-}
-
-.apple-button:active {
-  transform: scale(0.98);
-}
-
-/* Apple-style card */
-.apple-card {
-  @apply bg-white/90 backdrop-blur-xl rounded-3xl shadow-sm;
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
-}
-
-/* VisionOS-style card */
-.vision-card {
-  @apply bg-white/80 backdrop-blur-xl rounded-3xl;
-  box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.1),
-    0 12px 48px -4px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 30px !important;
-}
-
-/* Apple-style toggle */
-.apple-toggle {
-  @apply relative inline-flex items-center h-8 rounded-full w-14 transition-colors duration-300 focus:outline-none;
-}
-
-.apple-toggle-knob {
-  @apply inline-block w-6 h-6 transform rounded-full bg-white transition-transform duration-300 shadow-md;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-}
-
-/* Apple-style input */
-.apple-input {
-  @apply w-full py-3 text-xl border-b-2 border-black/10 focus:border-accent focus:outline-none transition-colors duration-300;
-  letter-spacing: -0.02em;
-}
-
-/* Apple-style list item */
-.apple-list-item {
-  @apply py-4 px-3 rounded-xl transition-colors duration-200 cursor-pointer;
-  min-height: 44px; /* Apple's minimum touch target size */
-}
-
-.apple-list-item:active {
-  transform: scale(0.99);
-}
-
-/* Apple-style segmented control */
-.segmented-control {
-  @apply flex rounded-xl overflow-hidden bg-gray-100 p-1;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
-}
-
-.segmented-control-option {
-  @apply flex-1 py-2 px-3 text-center text-sm font-medium transition-all duration-200 rounded-lg;
-  min-height: 36px;
-}
-
-.segmented-control-option.active {
-  @apply bg-white text-black shadow-sm;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.segmented-control-option:not(.active) {
-  @apply text-gray;
-}
-
-/* Micro route item */
-.micro-route-item {
-  @apply flex items-center p-3 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 mb-3 transition-all duration-200;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.micro-route-item:active {
-  transform: scale(0.98);
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-.micro-route-item.selected {
-  @apply border-accent bg-accent/5;
-  box-shadow: 0 2px 12px rgba(52, 199, 181, 0.15);
-}
-
-/* Safe area utilities */
-.pb-safe {
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-}
-
-.pt-safe {
-  padding-top: calc(1rem + env(safe-area-inset-top, 0px));
-}
-
-.mb-safe {
-  margin-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.mt-safe {
-  margin-top: env(safe-area-inset-top, 0px);
-}
-
-/* VisionOS-inspired gradient */
-.vision-gradient {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.5),
-    rgba(255, 255, 255, 0.2)
-  );
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+@keyframes drain {
+  from {
+    transform: scaleX(1);
   }
-}
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 52 199 181;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 52 199 181;
-    --radius: 1rem;
+  to {
+    transform: scaleX(0);
   }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-/* Add pulse animation for user location marker */
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
-}
-
-.pulse-animation {
-  animation: pulse 2s infinite;
-}
-
-.h-global {
-  height: 650px;
-  border-radius: 30px !important;
-
-}
-
-.border-radius-global {
-  border-radius: 30px !important;
-}
-
-.border-radius-global-top {
-  border-top-left-radius: 30px !important;
-  border-top-right-radius: 30px !important;
-}
-
-.border-radius-global-bottom {
-  border-bottom-left-radius: 30px !important;
-  border-bottom-right-radius: 30px !important;
-}
-
-.mapboxgl-ctrl-logo {
-  display: none !important;
-}
-
-.mapbox-logo{
-  display: none !important;
-}
-
-.font-xxs {
-  font-size: 0.65rem !important;
 }

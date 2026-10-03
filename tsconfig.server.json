@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "jsx": "preserve", "types": ["node"] },
+  "include": ["server/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts", "app/api/**/*.ts", "vitest.config.ts"]
+}

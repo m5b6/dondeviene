@@ -1,0 +1,159 @@
+{
+  "probedAt": "2026-10-03T15:10:21.540Z",
+  "sampled": 60,
+  "failures": 0,
+  "stopsWithNullServices": 0,
+  "itemAsObject": 0,
+  "topLevelKeys": {
+    "fechaprediccion,horaprediccion,nomett,paradero,respuestaParadero,servicios,urlLinkPublicidad,urlpublicidad,x,y": {
+      "count": 60,
+      "example": "PF1257"
+    }
+  },
+  "stopMessages": {
+    "09 - Entrega la frecuencia del servicio": {
+      "count": 60,
+      "example": "PF1257"
+    }
+  },
+  "responseCodes": {
+    "\"00\"": {
+      "count": 108,
+      "example": "PF1257/F26"
+    },
+    "\"10\"": {
+      "count": 63,
+      "example": "PA101/203e"
+    },
+    "\"01\"": {
+      "count": 23,
+      "example": "PB1375/B27"
+    }
+  },
+  "serviceMessages": {
+    "00 | Información de tiempos de los próximos 2 buses": {
+      "count": 108,
+      "example": "PF1257/F26"
+    },
+    "10 | No hay buses que se dirijan al paradero": {
+      "count": 63,
+      "example": "PA101/203e"
+    },
+    "01 | Información de tiempo de un bus": {
+      "count": 23,
+      "example": "PB1375/B27"
+    }
+  },
+  "etaTemplates": {
+    "bus2: ": {
+      "count": 86,
+      "example": " @ PA101/203e"
+    },
+    "bus1: Entre N Y N min": {
+      "count": 70,
+      "example": "Entre 8 Y 12 min @ PF1257/F26"
+    },
+    "bus1: ": {
+      "count": 63,
+      "example": " @ PA101/203e"
+    },
+    "bus2: Entre N Y N min": {
+      "count": 60,
+      "example": "Entre 22 Y 26 min @ PF1257/F26"
+    },
+    "bus2: Mas de N min": {
+      "count": 45,
+      "example": "Mas de 38 min @ PA101/203"
+    },
+    "bus1: En menos de N min": {
+      "count": 24,
+      "example": "En menos de 2 min @ PB1375/B27"
+    },
+    "bus1: Llegando": {
+      "count": 21,
+      "example": "Llegando @ PJ1696/110c"
+    },
+    "bus1: Mas de N min": {
+      "count": 16,
+      "example": "Mas de 57 min @ PJ1696/J07"
+    },
+    "bus2: En menos de N min": {
+      "count": 2,
+      "example": "En menos de 2 min @ PA640/J19"
+    },
+    "bus2: Llegando": {
+      "count": 1,
+      "example": "Llegando @ PI1901/I35"
+    }
+  },
+  "colors": {
+    "": {
+      "count": 52,
+      "example": "PA101/203"
+    },
+    "#cf152d": {
+      "count": 39,
+      "example": "PF1257/F26"
+    },
+    "#00A77E": {
+      "count": 28,
+      "example": "PA101/385"
+    },
+    "(missing)": {
+      "count": 15,
+      "example": "PD991/505"
+    },
+    "#F7941D": {
+      "count": 14,
+      "example": "PG1280/G09"
+    },
+    "#0093B3": {
+      "count": 13,
+      "example": "PJ1696/J07"
+    },
+    "#CF152D": {
+      "count": 11,
+      "example": "PB1375/B16"
+    },
+    "#00A1E4": {
+      "count": 7,
+      "example": "PJ1696/110c"
+    },
+    "#ED1C24": {
+      "count": 7,
+      "example": "PA111/116"
+    },
+    "#FFD400": {
+      "count": 5,
+      "example": "PF189/F01c"
+    },
+    "#0077bb": {
+      "count": 3,
+      "example": "PG1280/G24"
+    }
+  },
+  "directions": {
+    "1": {
+      "count": 74,
+      "example": "PF1257/F26"
+    },
+    "2": {
+      "count": 105,
+      "example": "PA101/203"
+    },
+    "undefined": {
+      "count": 15,
+      "example": "PD991/505"
+    }
+  },
+  "itemKeySets": {
+    "codigo,codigorespuesta,color,destino,distanciabus1,distanciabus2,horaprediccionbus1,horaprediccionbus2,itinerario,ppubus1,ppubus2,respuestaServicio,sentido,servicio": {
+      "count": 179,
+      "example": "PF1257/F26"
+    },
+    "codigorespuesta,distanciabus1,distanciabus2,horaprediccionbus1,horaprediccionbus2,ppubus1,ppubus2,respuestaServicio,servicio": {
+      "count": 15,
+      "example": "PD991/505"
+    }
+  }
+}
