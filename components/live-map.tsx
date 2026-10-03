@@ -1,9 +1,17 @@
 'use client';
 
 import * as maplibregl from 'maplibre-gl';
-import type { GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent, Marker, StyleSpecification } from 'maplibre-gl';
+import type {
+  FillExtrusionLayerSpecification,
+  GeoJSONSource,
+  Map as MapLibreMap,
+  MapLayerMouseEvent,
+  Marker,
+  StyleSpecification,
+} from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useRef, useState } from 'react';
+import { busExtrusions, routeExtrusions, stopExtrusions, userExtrusions, zoomScale } from '@/lib/geometry3d';
 import { MAP_BEARING, MAP_PITCH, SKY, type StyleLike, playfulStyle } from '@/lib/map-style';
 
 maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
@@ -40,6 +48,7 @@ export interface MapBus extends MapPoint {
   id: string;
   label: string;
   color: string;
+  heading: number;
   arriving?: boolean;
 }
 
@@ -64,20 +73,31 @@ interface BusEntry {
   element: HTMLElement;
   label: HTMLElement;
   current: [number, number];
-  frame: number | null;
+  from: [number, number];
+  to: [number, number];
+  startedAt: number | null;
+  heading: number;
+  color: string;
 }
+
+const MOVE_MS = 1800;
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const emptyCollection: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 
-const darken = (hex: string, amount: number): string => {
-  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!match) return '#2B2B2B';
-  const value = Number.parseInt(match[1], 16);
-  const channel = (shift: number) => Math.round(((value >> shift) & 255) * (1 - amount));
-  return `rgb(${channel(16)}, ${channel(8)}, ${channel(0)})`;
-};
+const collection = (features: unknown[]): GeoJSON.FeatureCollection => ({
+  type: 'FeatureCollection',
+  features: features as GeoJSON.Feature[],
+});
+
+const extrusionPaint = (): NonNullable<FillExtrusionLayerSpecification['paint']> => ({
+  'fill-extrusion-color': ['get', 'color'],
+  'fill-extrusion-base': ['get', 'base'],
+  'fill-extrusion-height': ['get', 'height'],
+  'fill-extrusion-opacity': 1,
+  'fill-extrusion-vertical-gradient': true,
+});
 
 const stopsToGeoJson = (stops: MapStop[]): GeoJSON.FeatureCollection => ({
   type: 'FeatureCollection',
@@ -104,79 +124,72 @@ const routeToGeoJson = (route: MapRoute | null | undefined): GeoJSON.FeatureColl
       }
     : emptyCollection;
 
-const tween = (entry: BusEntry, target: [number, number]) => {
-  if (entry.frame !== null) cancelAnimationFrame(entry.frame);
-  if (prefersReducedMotion()) {
-    entry.current = target;
-    entry.marker.setLngLat(target);
-    return;
-  }
-  const from = entry.current;
-  const startedAt = performance.now();
-  const duration = 1800;
-  const step = (now: number) => {
-    const progress = Math.min(1, (now - startedAt) / duration);
-    const eased = 1 - (1 - progress) ** 3;
-    entry.current = [from[0] + (target[0] - from[0]) * eased, from[1] + (target[1] - from[1]) * eased];
-    entry.marker.setLngLat(entry.current);
-    entry.frame = progress < 1 ? requestAnimationFrame(step) : null;
-  };
-  entry.frame = requestAnimationFrame(step);
-};
-
-const styleBus = (element: HTMLElement, bus: MapBus) => {
-  element.style.setProperty('--bus', bus.color);
-  element.style.setProperty('--bus-dark', darken(bus.color, 0.3));
-  element.classList.toggle('dv-bus-arriving', bus.arriving === true);
-};
-
-const buildBusElement = (bus: MapBus): { element: HTMLElement; label: HTMLElement } => {
+const buildLabelElement = (bus: MapBus): { element: HTMLElement; label: HTMLElement } => {
   const element = document.createElement('div');
   element.className = 'dv-bus';
   element.setAttribute('role', 'img');
   element.setAttribute('aria-label', `Bus ${bus.label}`);
-  const inner = document.createElement('span');
-  inner.className = 'dv-bus-inner';
   const label = document.createElement('span');
   label.className = 'dv-bus-label';
   label.textContent = bus.label;
-  const body = document.createElement('span');
-  body.className = 'dv-bus-body';
-  body.innerHTML = '<span class="dv-bus-windows"><i></i><i></i><i></i></span><span class="dv-bus-lights"></span>';
-  const wheels = document.createElement('span');
-  wheels.className = 'dv-bus-wheels';
-  wheels.innerHTML = '<i></i><i></i>';
-  const shadow = document.createElement('span');
-  shadow.className = 'dv-bus-shadow';
-  inner.append(label, body, wheels, shadow);
-  element.append(inner);
-  styleBus(element, bus);
+  element.append(label);
+  element.classList.toggle('dv-bus-arriving', bus.arriving === true);
   return { element, label };
 };
 
 export const LiveMap = ({ stops, route, buses, user, fit, fitKey, onStopClick, ariaLabel }: LiveMapProps) => {
   const container = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const busMarkers = useRef(new Map<string, BusEntry>());
-  const pinMarkers = useRef(new Map<string, Marker>());
-  const userMarker = useRef<Marker | null>(null);
+  const busEntries = useRef(new Map<string, BusEntry>());
+  const busLoop = useRef<number | null>(null);
   const clickHandler = useRef(onStopClick);
   const fitPoints = useRef(fit);
   const [ready, setReady] = useState(false);
   const [tilted, setTilted] = useState(true);
   const tiltedRef = useRef(true);
+  const [scale, setScale] = useState(() => zoomScale(14));
+  const scaleRef = useRef(scale);
 
   clickHandler.current = onStopClick;
   fitPoints.current = fit;
   tiltedRef.current = tilted;
+  scaleRef.current = scale;
+
+  const refreshBuses = () => {
+    const map = mapRef.current;
+    const source = map?.getSource('buses3d') as GeoJSONSource | undefined;
+    if (!source) return;
+    const features = [...busEntries.current.values()].flatMap((entry) =>
+      busExtrusions({ longitude: entry.current[0], latitude: entry.current[1], color: entry.color, heading: entry.heading }, scaleRef.current),
+    );
+    source.setData(collection(features));
+  };
+
+  const stepBuses = (now: number) => {
+    let active = false;
+    for (const entry of busEntries.current.values()) {
+      if (entry.startedAt === null) continue;
+      const progress = Math.min(1, (now - entry.startedAt) / MOVE_MS);
+      const eased = 1 - (1 - progress) ** 3;
+      entry.current = [entry.from[0] + (entry.to[0] - entry.from[0]) * eased, entry.from[1] + (entry.to[1] - entry.from[1]) * eased];
+      entry.marker.setLngLat(entry.current);
+      if (progress < 1) active = true;
+      else entry.startedAt = null;
+    }
+    refreshBuses();
+    busLoop.current = active ? requestAnimationFrame(stepBuses) : null;
+  };
+
+  const ensureBusLoop = () => {
+    if (busLoop.current === null) busLoop.current = requestAnimationFrame(stepBuses);
+  };
 
   useEffect(() => {
     const host = container.current;
     if (!host) return;
     let cancelled = false;
     let observer: ResizeObserver | null = null;
-    const busEntries = busMarkers.current;
-    const pins = pinMarkers.current;
+    const entries = busEntries.current;
 
     loadStyle().then((style) => {
       if (cancelled) return;
@@ -206,6 +219,9 @@ export const LiveMap = ({ stops, route, buses, user, fit, fitKey, onStopClick, a
         }
         map.addSource('route', { type: 'geojson', data: emptyCollection });
         map.addSource('stops', { type: 'geojson', data: emptyCollection });
+        map.addSource('static3d', { type: 'geojson', data: emptyCollection });
+        map.addSource('buses3d', { type: 'geojson', data: emptyCollection });
+        map.addSource('userRing', { type: 'geojson', data: emptyCollection });
         map.addLayer({
           id: 'route-casing',
           type: 'line',
@@ -232,16 +248,37 @@ export const LiveMap = ({ stops, route, buses, user, fit, fitKey, onStopClick, a
             'circle-pitch-alignment': 'map',
           },
         });
-        map.on('click', 'stops-dots', (event: MapLayerMouseEvent) => {
-          const code = event.features?.[0]?.properties?.code;
-          if (typeof code === 'string') clickHandler.current?.(code);
+        map.addLayer({
+          id: 'user-ring',
+          type: 'circle',
+          source: 'userRing',
+          paint: {
+            'circle-radius': 12,
+            'circle-color': '#0057B8',
+            'circle-opacity': 0,
+            'circle-stroke-color': '#0057B8',
+            'circle-stroke-width': 2,
+            'circle-stroke-opacity': 0.8,
+            'circle-pitch-alignment': 'map',
+          },
         });
-        map.on('mouseenter', 'stops-dots', () => {
-          map.getCanvas().style.cursor = 'pointer';
-        });
-        map.on('mouseleave', 'stops-dots', () => {
-          map.getCanvas().style.cursor = '';
-        });
+        map.addLayer({ id: 'static3d', type: 'fill-extrusion', source: 'static3d', paint: extrusionPaint() });
+        map.addLayer({ id: 'buses3d', type: 'fill-extrusion', source: 'buses3d', paint: extrusionPaint() });
+        for (const layer of ['stops-dots', 'static3d']) {
+          map.on('click', layer, (event: MapLayerMouseEvent) => {
+            const code = event.features?.[0]?.properties?.code;
+            if (typeof code === 'string') clickHandler.current?.(code);
+          });
+          map.on('mouseenter', layer, () => {
+            map.getCanvas().style.cursor = 'pointer';
+          });
+          map.on('mouseleave', layer, () => {
+            map.getCanvas().style.cursor = '';
+          });
+        }
+        const syncScale = () => setScale(Math.round(zoomScale(map.getZoom()) * 4) / 4);
+        map.on('zoomend', syncScale);
+        syncScale();
         setReady(true);
       });
 
@@ -252,15 +289,10 @@ export const LiveMap = ({ stops, route, buses, user, fit, fitKey, onStopClick, a
     return () => {
       cancelled = true;
       observer?.disconnect();
-      for (const entry of busEntries.values()) {
-        if (entry.frame !== null) cancelAnimationFrame(entry.frame);
-        entry.marker.remove();
-      }
-      busEntries.clear();
-      for (const pin of pins.values()) pin.remove();
-      pins.clear();
-      userMarker.current?.remove();
-      userMarker.current = null;
+      if (busLoop.current !== null) cancelAnimationFrame(busLoop.current);
+      busLoop.current = null;
+      for (const entry of entries.values()) entry.marker.remove();
+      entries.clear();
       mapRef.current?.remove();
       mapRef.current = null;
       setReady(false);
@@ -277,55 +309,54 @@ export const LiveMap = ({ stops, route, buses, user, fit, fitKey, onStopClick, a
     const map = mapRef.current;
     if (!ready || !map) return;
     (map.getSource('stops') as GeoJSONSource | undefined)?.setData(stopsToGeoJson(stops));
-    const pins = pinMarkers.current;
-    const wanted = new Set<string>();
-    for (const stop of stops) {
-      if (!stop.highlight) continue;
-      wanted.add(stop.code);
-      const existing = pins.get(stop.code);
-      if (existing) {
-        existing.setLngLat([stop.longitude, stop.latitude]);
-        continue;
-      }
-      const element = document.createElement('button');
-      element.type = 'button';
-      element.className = 'dv-pin';
-      element.setAttribute('aria-label', `Paradero ${stop.code}, ${stop.name}`);
-      element.innerHTML = '<span class="dv-pin-inner"><span class="dv-pin-head"><i></i></span><span class="dv-pin-stem"></span><span class="dv-pin-shadow"></span></span>';
-      element.addEventListener('click', () => clickHandler.current?.(stop.code));
-      pins.set(stop.code, new maplibregl.Marker({ element, anchor: 'bottom' }).setLngLat([stop.longitude, stop.latitude]).addTo(map));
-    }
-    for (const [code, pin] of pins) {
-      if (wanted.has(code)) continue;
-      pin.remove();
-      pins.delete(code);
-    }
   }, [stops, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
+    const features: unknown[] = [];
+    if (route && route.path.length > 1) features.push(...routeExtrusions(route.path, route.color, scale));
+    for (const stop of stops) features.push(...stopExtrusions(stop, scale));
+    if (user) features.push(...userExtrusions(user, scale));
+    (map.getSource('static3d') as GeoJSONSource | undefined)?.setData(collection(features));
+  }, [route, stops, user, scale, ready]);
+
+  useEffect(() => {
+    if (ready) refreshBuses();
+  }, [scale, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const ring = map.getSource('userRing') as GeoJSONSource | undefined;
     if (!user) {
-      userMarker.current?.remove();
-      userMarker.current = null;
+      ring?.setData(emptyCollection);
       return;
     }
-    if (!userMarker.current) {
-      const element = document.createElement('div');
-      element.className = 'dv-user';
-      element.setAttribute('role', 'img');
-      element.setAttribute('aria-label', 'Tu ubicación');
-      userMarker.current = new maplibregl.Marker({ element }).setLngLat([user.longitude, user.latitude]).addTo(map);
-    } else {
-      userMarker.current.setLngLat([user.longitude, user.latitude]);
-    }
+    ring?.setData({
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [user.longitude, user.latitude] } }],
+    });
+    if (prefersReducedMotion()) return;
+    let frame = 0;
+    const pulse = (now: number) => {
+      const t = (now % 1800) / 1800;
+      if (map.getLayer('user-ring')) {
+        map.setPaintProperty('user-ring', 'circle-radius', 12 + 30 * t);
+        map.setPaintProperty('user-ring', 'circle-stroke-opacity', 0.8 * (1 - t));
+      }
+      frame = requestAnimationFrame(pulse);
+    };
+    frame = requestAnimationFrame(pulse);
+    return () => cancelAnimationFrame(frame);
   }, [user, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
-    const entries = busMarkers.current;
+    const entries = busEntries.current;
     const seen = new Set<string>();
+    const reduced = prefersReducedMotion();
     for (const bus of buses) {
       seen.add(bus.id);
       const target: [number, number] = [bus.longitude, bus.latitude];
@@ -333,20 +364,39 @@ export const LiveMap = ({ stops, route, buses, user, fit, fitKey, onStopClick, a
       if (existing) {
         existing.label.textContent = bus.label;
         existing.element.setAttribute('aria-label', `Bus ${bus.label}`);
-        styleBus(existing.element, bus);
-        tween(existing, target);
+        existing.element.classList.toggle('dv-bus-arriving', bus.arriving === true);
+        existing.heading = bus.heading;
+        existing.color = bus.color;
+        existing.from = existing.current;
+        existing.to = target;
+        existing.startedAt = reduced ? null : performance.now();
+        if (reduced) {
+          existing.current = target;
+          existing.marker.setLngLat(target);
+        }
         continue;
       }
-      const { element, label } = buildBusElement(bus);
-      const marker = new maplibregl.Marker({ element, anchor: 'bottom' }).setLngLat(target).addTo(map);
-      entries.set(bus.id, { marker, element, label, current: target, frame: null });
+      const { element, label } = buildLabelElement(bus);
+      const marker = new maplibregl.Marker({ element, anchor: 'bottom', offset: [0, -34] }).setLngLat(target).addTo(map);
+      entries.set(bus.id, {
+        marker,
+        element,
+        label,
+        current: target,
+        from: target,
+        to: target,
+        startedAt: null,
+        heading: bus.heading,
+        color: bus.color,
+      });
     }
     for (const [id, entry] of entries) {
       if (seen.has(id)) continue;
-      if (entry.frame !== null) cancelAnimationFrame(entry.frame);
       entry.marker.remove();
       entries.delete(id);
     }
+    refreshBuses();
+    if ([...entries.values()].some((entry) => entry.startedAt !== null)) ensureBusLoop();
   }, [buses, ready]);
 
   useEffect(() => {
@@ -357,7 +407,7 @@ export const LiveMap = ({ stops, route, buses, user, fit, fitKey, onStopClick, a
     const camera = tiltedRef.current ? { pitch: MAP_PITCH, bearing: MAP_BEARING } : { pitch: 0, bearing: 0 };
     const duration = prefersReducedMotion() ? 0 : 800;
     if (points.length === 1) {
-      map.easeTo({ center: [points[0].longitude, points[0].latitude], zoom: 16, duration, ...camera });
+      map.easeTo({ center: [points[0].longitude, points[0].latitude], zoom: 16.5, duration, ...camera });
       return;
     }
     const bounds = new maplibregl.LngLatBounds();

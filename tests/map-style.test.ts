@@ -26,7 +26,8 @@ describe('playfulStyle on OpenFreeMap liberty', () => {
     expect(JSON.stringify(buildings?.paint?.['fill-extrusion-color'])).toContain('render_height');
     expect(buildings?.paint?.['fill-extrusion-vertical-gradient']).toBe(true);
     expect(buildings?.minzoom).toBe(12);
-    expect(buildings?.paint?.['fill-extrusion-height']).toEqual(['get', 'render_height']);
+    expect(JSON.stringify(buildings?.paint?.['fill-extrusion-height'])).toContain('coalesce');
+    expect(JSON.stringify(buildings?.paint?.['fill-extrusion-color'])).toContain('coalesce');
   });
 
   it('gives roads friendly solid colours and round ends, widest roads boldest', () => {

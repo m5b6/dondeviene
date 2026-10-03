@@ -56,6 +56,7 @@ export const RouteMap = ({ service, stopCode, fallbackStop, arrival, heightClass
         label: formatEtaShort(bus.eta) || '—',
         color: line.hex,
         arriving: bus.eta.kind === 'arriving',
+        heading: estimate.headingDegrees,
       });
     });
     return { buses: placed, unplaced: missing };

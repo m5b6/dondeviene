@@ -56,6 +56,11 @@ describe('estimateBusPosition', () => {
     expect(estimate?.position.longitude).toBeLessThan(stop.longitude);
   });
 
+  it('points the bus along the direction of travel', () => {
+    const estimate = estimateBusPosition(straightPath, stop, 250);
+    near(estimate?.headingDegrees ?? 0, 90, 1);
+  });
+
   it('puts an arriving bus at the stop', () => {
     const estimate = estimateBusPosition(straightPath, stop, 0);
     near(haversineMeters(stop.latitude, stop.longitude, estimate?.position.latitude ?? 0, estimate?.position.longitude ?? 0), 0, 2);

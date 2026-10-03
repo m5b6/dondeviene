@@ -1,4 +1,5 @@
 import { haversineMeters } from '../server/red/geo';
+import { headingBetween } from './geometry3d';
 
 export interface LatLng {
   latitude: number;
@@ -74,7 +75,10 @@ export const MAX_STOP_OFFSET_METERS = 150;
 export interface EstimatedBus {
   position: LatLng;
   clamped: boolean;
+  headingDegrees: number;
 }
+
+const HEADING_LOOKAROUND_METERS = 12;
 
 export const estimateBusPosition = (
   path: PathPoint[],
@@ -86,6 +90,11 @@ export const estimateBusPosition = (
   const projection = projectOntoPath(path, stop, cumulative);
   if (!projection || projection.offsetMeters > MAX_STOP_OFFSET_METERS) return null;
   const wanted = projection.distanceFromStartMeters - metersBehindStop;
-  const position = pointAtDistance(path, Math.max(0, wanted), cumulative);
-  return position ? { position, clamped: wanted < 0 } : null;
+  const distance = Math.max(0, wanted);
+  const position = pointAtDistance(path, distance, cumulative);
+  if (!position) return null;
+  const behind = pointAtDistance(path, Math.max(0, distance - HEADING_LOOKAROUND_METERS), cumulative);
+  const ahead = pointAtDistance(path, distance + HEADING_LOOKAROUND_METERS, cumulative);
+  const headingDegrees = behind && ahead ? headingBetween(behind, ahead) : 0;
+  return { position, clamped: wanted < 0, headingDegrees };
 };

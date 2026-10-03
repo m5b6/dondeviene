@@ -94,7 +94,21 @@ const recolorFill = (layer: StyleLayer): StyleLayer => {
 
 const recolorBuildings3d = (layer: StyleLayer): StyleLayer => ({
   ...withPaint(layer, {
-    'fill-extrusion-color': ['interpolate', ['linear'], ['get', 'render_height'], 0, '#FFC8B4', 18, '#FFB3C7', 45, '#E2B6F4', 110, '#B7C6FF'],
+    'fill-extrusion-color': [
+      'interpolate',
+      ['linear'],
+      ['coalesce', ['get', 'render_height'], 12],
+      0,
+      '#FFC8B4',
+      18,
+      '#FFB3C7',
+      45,
+      '#E2B6F4',
+      110,
+      '#B7C6FF',
+    ],
+    'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 12],
+    'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
     'fill-extrusion-opacity': 1,
     'fill-extrusion-vertical-gradient': true,
   }),
